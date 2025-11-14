@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { parseRelatedContentFromFile, RelatedContent } from './parser';
+import { parseRelatedContentFromFile, RelatedContent, MediaItem } from './parser';
 
 function testParser() {
   console.log('Running parser test...\n');
@@ -12,44 +12,80 @@ function testParser() {
     console.log('Test Results:');
     console.log('=============\n');
 
-    console.log(`Found ${result.tv_shows.length} TV shows`);
-    console.log(`Found ${result.movies.length} movies\n`);
+    // Count categories and items
+    const tvShowCategories = Object.keys(result.tv_shows);
+    const movieCategories = Object.keys(result.movies);
 
-    console.log('TV Shows (first 3):');
-    result.tv_shows.slice(0, 3).forEach((show, idx) => {
-      console.log(`${idx + 1}. ${show.name}`);
-      console.log(`   Link: ${show.link}`);
-      console.log(`   Image: ${show.image.substring(0, 60)}...\n`);
-    });
+    console.log(`Found ${tvShowCategories.length} TV show categories`);
+    console.log(`Found ${movieCategories.length} movie categories\n`);
 
-    console.log('Movies (first 3):');
-    result.movies.slice(0, 3).forEach((movie, idx) => {
-      console.log(`${idx + 1}. ${movie.name}`);
-      console.log(`   Link: ${movie.link}`);
-      console.log(`   Image: ${movie.image.substring(0, 60)}...\n`);
-    });
+    console.log('TV Show Categories:', tvShowCategories.join(', '));
+    console.log('Movie Categories:', movieCategories.join(', '), '\n');
 
-    console.log('\nFull JSON Output:');
-    console.log('=================');
-    console.log(JSON.stringify(result, null, 2));
+    // Display sample from each category
+    for (const category of tvShowCategories.slice(0, 2)) {
+      const shows = result.tv_shows[category];
+      console.log(`\n${category} - TV Shows (${shows.length} total, showing first 2):`);
+      shows.slice(0, 2).forEach((show, idx) => {
+        console.log(`  ${idx + 1}. ${show.name}`);
+        console.log(`     Link: ${show.link}`);
+        console.log(`     Image: ${show.image.substring(0, 60)}...`);
+      });
+    }
+
+    for (const category of movieCategories.slice(0, 2)) {
+      const movies = result.movies[category];
+      console.log(`\n${category} - Movies (${movies.length} total, showing first 2):`);
+      movies.slice(0, 2).forEach((movie, idx) => {
+        console.log(`  ${idx + 1}. ${movie.name}`);
+        console.log(`     Link: ${movie.link}`);
+        console.log(`     Image: ${movie.image.substring(0, 60)}...`);
+      });
+    }
+
+    console.log('\n\nFull JSON Output (truncated):');
+    console.log('============================');
+
+    // Show a truncated version
+    const truncated = {
+      movies: {} as any,
+      tv_shows: {} as any
+    };
+
+    for (const category of movieCategories.slice(0, 2)) {
+      truncated.movies[category] = result.movies[category].slice(0, 2);
+    }
+    for (const category of tvShowCategories.slice(0, 2)) {
+      truncated.tv_shows[category] = result.tv_shows[category].slice(0, 2);
+    }
+
+    console.log(JSON.stringify(truncated, null, 2));
 
     // Validate the results
-    if (result.tv_shows.length === 0 && result.movies.length === 0) {
-      console.error('\n❌ TEST FAILED: No content found!');
+    if (tvShowCategories.length === 0 && movieCategories.length === 0) {
+      console.error('\n❌ TEST FAILED: No categories found!');
       process.exit(1);
     }
 
     // Check if all items have required fields
-    const allItems = [...result.tv_shows, ...result.movies];
+    const allItems: MediaItem[] = [];
+    for (const category of tvShowCategories) {
+      allItems.push(...result.tv_shows[category]);
+    }
+    for (const category of movieCategories) {
+      allItems.push(...result.movies[category]);
+    }
+
     const invalidItems = allItems.filter(item => !item.name || !item.link || !item.image);
 
     if (invalidItems.length > 0) {
       console.error(`\n❌ TEST FAILED: Found ${invalidItems.length} items with missing fields!`);
-      console.error(invalidItems);
+      console.error(invalidItems.slice(0, 5));
       process.exit(1);
     }
 
-    console.log('\n✅ TEST PASSED: All items have required fields (name, link, image)');
+    console.log(`\n✅ TEST PASSED: All ${allItems.length} items have required fields (name, link, image)`);
+    console.log(`✅ Found ${tvShowCategories.length} TV show categories and ${movieCategories.length} movie categories`);
     process.exit(0);
 
   } catch (error) {
