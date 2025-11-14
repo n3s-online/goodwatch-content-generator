@@ -55,14 +55,16 @@ The tool outputs JSON organized by filter categories. Each category contains arr
       {
         "name": "Movie Title (Year)",
         "link": "https://goodwatch.app/movie/id-slug",
-        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/..."
+        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/...",
+        "goodwatch_score": 84
       }
     ],
     "Intrigue": [
       {
         "name": "Another Movie (Year)",
         "link": "https://goodwatch.app/movie/id-slug",
-        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/..."
+        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/...",
+        "goodwatch_score": 91
       }
     ]
   },
@@ -71,19 +73,30 @@ The tool outputs JSON organized by filter categories. Each category contains arr
       {
         "name": "Show Title (Year)",
         "link": "https://goodwatch.app/show/id-slug",
-        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/..."
+        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/...",
+        "goodwatch_score": 81
       }
     ],
     "Intrigue": [
       {
         "name": "Another Show (Year)",
         "link": "https://goodwatch.app/show/id-slug",
-        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/..."
+        "image": "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/...",
+        "goodwatch_score": 82
       }
     ]
   }
 }
 ```
+
+### Data Fields
+
+Each media item includes the following fields:
+
+- **name**: Title and year of the show/movie (e.g., "The Mandalorian (2019)")
+- **link**: Full URL to the Goodwatch page
+- **image**: URL to the poster image from TMDB
+- **goodwatch_score**: Numerical rating from Goodwatch (typically 0-100)
 
 ### Filter Categories
 

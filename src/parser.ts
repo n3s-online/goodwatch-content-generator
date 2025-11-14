@@ -5,6 +5,7 @@ export interface MediaItem {
   name: string;
   link: string;
   image: string;
+  goodwatch_score: number;
 }
 
 export interface CategoryContent {
@@ -36,12 +37,19 @@ function extractMediaItems($: cheerio.CheerioAPI, container: cheerio.Cheerio<any
     const titleSpan = $link.find('span.text-sm.font-bold.text-white');
     const name = titleSpan.text().trim();
 
+    // Extract the GoodWatch score
+    // The score is in a span with class "text-lg font-bold" inside a div with class starting with "bg-vibe-"
+    const scoreSpan = $link.find('div[class*="bg-vibe-"] span.text-lg.font-bold');
+    const scoreText = scoreSpan.text().trim();
+    const goodwatch_score = scoreText ? parseInt(scoreText, 10) : 0;
+
     if (!name || !image) return;
 
     items.push({
       name,
       link: `https://goodwatch.app${href}`,
-      image
+      image,
+      goodwatch_score
     });
   });
 
