@@ -21,15 +21,28 @@ pnpm install
 
 ## Usage
 
-### Run the parser with a local HTML file:
+### Fetch and parse from a URL:
 
 ```bash
-pnpm start -- <url> --file <path-to-html-file>
+pnpm start <url>
 ```
 
 Example:
 ```bash
-pnpm start -- https://goodwatch.app/show/66732-stranger-things --file docs/dom/goodwatch.app_show_66732-stranger-things.html
+pnpm start https://goodwatch.app/show/66732-stranger-things
+```
+
+**Note:** Some websites (including Goodwatch) may have anti-bot protection that blocks automated requests. If you encounter a 403 Forbidden error, use the local file option below instead.
+
+### Parse from a local HTML file:
+
+```bash
+pnpm start <url> --file <path-to-html-file>
+```
+
+Example:
+```bash
+pnpm start https://goodwatch.app/show/66732-stranger-things --file docs/dom/goodwatch.app_show_66732-stranger-things.html
 ```
 
 ### Run tests:
@@ -130,16 +143,19 @@ The parser extracts content organized by the following Goodwatch filter categori
 
 ## How It Works
 
-1. The tool uses Cheerio to parse HTML content
-2. It finds the `#related` section in the Goodwatch page
-3. Extracts all links to shows (`/show/`) and movies (`/movie/`)
-4. For each item, it collects:
+1. The tool fetches the HTML content from the provided URL (or reads from a local file)
+2. Uses Cheerio to parse the HTML content
+3. Finds the `#related` section in the Goodwatch page
+4. Extracts all links to shows (`/show/`) and movies (`/movie/`)
+5. For each item, it collects:
    - Name (from the title span)
    - Link (from the href attribute, converted to full URL)
    - Image (from the poster image src)
+   - Goodwatch Score (from the rating element)
 
 ## Dependencies
 
+- **axios**: HTTP client for fetching web pages
 - **cheerio**: Fast, flexible HTML parsing
 - **commander**: Command-line interface framework
 - **typescript**: Type safety and modern JavaScript features
