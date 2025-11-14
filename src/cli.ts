@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
+import axios from 'axios';
 import { parseRelatedContent } from './parser';
 
 const program = new Command();
@@ -27,11 +28,68 @@ program
         }
         html = fs.readFileSync(options.file, 'utf-8');
       } else {
-        // For now, we'll support parsing from local files
-        // In a production version, you would fetch the URL here
-        console.error('Error: URL fetching not implemented yet. Use --file option to parse local HTML files.');
-        console.error('Example: goodwatch-parser <url> --file docs/dom/goodwatch.app_show_66732-stranger-things.html');
-        process.exit(1);
+        // Fetch URL
+        // Validate URL format
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          console.error('Error: URL must start with http:// or https://');
+          process.exit(1);
+        }
+
+        // Optional: Validate it's a Goodwatch URL
+        if (!url.includes('goodwatch.app')) {
+          console.error('Warning: URL does not appear to be from goodwatch.app');
+        }
+
+        console.error(`Fetching URL: ${url}`);
+
+        try {
+          const response = await axios.get(url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'DNT': '1',
+              'Connection': 'keep-alive',
+              'Upgrade-Insecure-Requests': '1',
+              'Sec-Fetch-Dest': 'document',
+              'Sec-Fetch-Mode': 'navigate',
+              'Sec-Fetch-Site': 'none',
+              'Sec-Fetch-User': '?1',
+              'Cache-Control': 'max-age=0'
+            },
+            timeout: 30000, // 30 second timeout
+            maxRedirects: 5,
+            validateStatus: (status) => status < 500 // Accept any status code less than 500
+          });
+
+          if (response.status === 403) {
+            console.error('Error: Access forbidden (403). The website may be blocking automated requests.');
+            console.error('Try using the --file option to parse a locally saved HTML file instead.');
+            process.exit(1);
+          }
+
+          if (response.status !== 200) {
+            console.error(`Error: HTTP ${response.status} - ${response.statusText}`);
+            process.exit(1);
+          }
+
+          html = response.data;
+          console.error('Successfully fetched URL');
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            if (error.response) {
+              console.error(`Error: HTTP ${error.response.status} - ${error.response.statusText}`);
+            } else if (error.request) {
+              console.error('Error: No response received from server');
+            } else {
+              console.error(`Error: ${error.message}`);
+            }
+          } else {
+            console.error(`Error: ${error instanceof Error ? error.message : error}`);
+          }
+          process.exit(1);
+        }
       }
 
       const result = parseRelatedContent(html);
