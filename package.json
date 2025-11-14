@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/cli.ts",
-    "test": "ts-node src/test.ts"
+    "test": "ts-node src/parser.test.ts",
+    "test:legacy": "ts-node src/test.ts"
   },
   "repository": {
     "type": "git",

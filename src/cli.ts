@@ -93,6 +93,21 @@ program
       }
 
       const result = parseRelatedContent(html);
+
+      // Check if results are completely empty
+      const hasMovies = Object.keys(result.movies).length > 0;
+      const hasShows = Object.keys(result.tv_shows).length > 0;
+
+      if (!hasMovies && !hasShows) {
+        console.error('\n⚠️  WARNING: Results are completely empty!');
+        console.error('This could mean:');
+        console.error('  1. The URL does not have a "Related" section');
+        console.error('  2. The page structure has changed');
+        console.error('  3. The website is blocking or returning different content');
+        console.error('  4. The URL is incorrect (e.g., using /movie/ instead of /show/)');
+        console.error('\nTip: Try saving the HTML with your browser and using the --file option to parse it locally.');
+      }
+
       console.log(JSON.stringify(result, null, 2));
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : error);
