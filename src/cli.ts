@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { parseRelatedContent } from "./parser";
 import { fetchHTML } from "./fetcher";
+import { createVideo } from "./video-cli";
 
 /**
  * Extract the ID and slug from a Goodwatch URL
@@ -18,8 +19,10 @@ function extractIdSlugFromUrl(url: string): string | null {
 const program = new Command();
 
 program
-  .name("goodwatch-parser")
-  .description("Parse related shows and movies from Goodwatch pages")
+  .name("goodwatch-content-generator")
+  .description(
+    "Parse related shows and movies from Goodwatch pages and create videos"
+  )
   .version("1.0.0");
 
 program
@@ -120,5 +123,17 @@ program
       }
     }
   );
+
+program
+  .command("create-video")
+  .description("Create a short-form video from an output file")
+  .action(async () => {
+    try {
+      await createVideo();
+    } catch (error) {
+      console.error("Error:", error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
 program.parse();

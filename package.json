@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/cli.ts",
+    "create-video": "ts-node src/cli.ts create-video",
     "test": "ts-node src/parser.test.ts",
     "test:legacy": "ts-node src/test.ts"
   },
@@ -23,14 +24,24 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@remotion/bundler": "^4.0.375",
+    "@types/inquirer": "^9.0.9",
     "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@remotion/cli": "^4.0.375",
+    "@remotion/renderer": "^4.0.375",
     "axios": "^1.13.2",
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
-    "puppeteer": "^24.30.0"
+    "inquirer": "^12.11.1",
+    "puppeteer": "^24.30.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remotion": "^4.0.375"
   }
 }

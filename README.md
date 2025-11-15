@@ -1,15 +1,15 @@
 # Goodwatch Content Generator
 
-A Node.js TypeScript CLI tool that parses related TV shows and movies from Goodwatch pages, organized by filter categories.
+A Node.js TypeScript CLI tool that parses related TV shows and movies from Goodwatch pages and creates engaging short-form videos.
 
 ## Features
 
-- Parse related content from Goodwatch show/movie pages
-- Extract structured data including name, link, and image
-- Organize content by filter categories (Overall, Intrigue, Tension, Mystery, etc.)
-- Supports both TV shows and movies
-- TypeScript-based for type safety
-- Command-line interface for easy usage
+- **Content Parsing**: Extract related content from Goodwatch show/movie pages
+- **Structured Data**: Organize content by filter categories (Overall, Intrigue, Tension, Mystery, etc.)
+- **Video Generation**: Create short-form vertical videos (9:16 aspect ratio) using Remotion
+- **Smart Deduplication**: Ensure no duplicate content across video scenes
+- **Smooth Animations**: Professional fade-in and slide-up effects
+- **TypeScript-based**: Full type safety throughout the codebase
 
 ## Installation
 
@@ -21,16 +21,21 @@ pnpm install
 
 ## Usage
 
-### Fetch and parse from a URL:
+### 1. Parse Content from Goodwatch
+
+Fetch and parse from a URL:
 
 ```bash
 pnpm start <url>
 ```
 
 Example:
+
 ```bash
 pnpm start https://goodwatch.app/show/66732-stranger-things
 ```
+
+This creates a `.output.json` file with structured data.
 
 **Note:** Some websites (including Goodwatch) may have anti-bot protection that blocks automated requests. If you encounter a 403 Forbidden error, use the local file option below instead.
 
@@ -41,17 +46,40 @@ pnpm start <url> --file <path-to-html-file>
 ```
 
 Example:
+
 ```bash
 pnpm start https://goodwatch.app/show/66732-stranger-things --file docs/dom/goodwatch.app_show_66732-stranger-things.html
 ```
 
-### Run tests:
+### 2. Create a Video
+
+Generate a short-form video from your parsed data:
+
+```bash
+pnpm create-video
+```
+
+The tool will:
+
+1. Show available `.output.json` files
+2. Let you select one interactively
+3. Render a vertical video (1080x1920) to the `output/` directory
+
+**Video Structure:**
+
+- Scene 1: "If you like [Show]" intro (3s)
+- Scene 2: Overall recommendations grid (5s)
+- Scenes 3-5: Category-specific grids (5s each)
+
+See [Video Creation Guide](docs/VIDEO_CREATION.md) for detailed documentation.
+
+### 3. Run Tests
 
 ```bash
 pnpm test
 ```
 
-### Build the project:
+### 4. Build the Project
 
 ```bash
 pnpm run build
@@ -155,11 +183,21 @@ The parser extracts content organized by the following Goodwatch filter categori
 
 ## Dependencies
 
+### Core
+
 - **axios**: HTTP client for fetching web pages
 - **cheerio**: Fast, flexible HTML parsing
 - **commander**: Command-line interface framework
 - **typescript**: Type safety and modern JavaScript features
 - **ts-node**: TypeScript execution for development
+
+### Video Generation
+
+- **remotion**: React-based video creation framework
+- **@remotion/cli**: Remotion command-line tools
+- **@remotion/renderer**: Server-side video rendering
+- **@remotion/bundler**: Webpack bundling for Remotion
+- **react** & **react-dom**: UI framework for video components
 
 ## Development
 

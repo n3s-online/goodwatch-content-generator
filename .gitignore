@@ -36,3 +36,16 @@ coverage/
 
 # Output files
 *.output.json
+output/
+
+# Remotion
+.remotion/
+remotion.config.ts
+
+# Temporary files
+temp/
+*.tmp
+*.temp
+
+# pnpm
+.pnpm-debug.log
