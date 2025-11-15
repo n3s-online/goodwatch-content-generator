@@ -6,6 +6,15 @@ import * as path from "path";
 import { parseRelatedContent } from "./parser";
 import { fetchHTML } from "./fetcher";
 
+/**
+ * Extract the ID and slug from a Goodwatch URL
+ * e.g., "https://goodwatch.app/movie/1412450-stranger-things" -> "1412450-stranger-things"
+ */
+function extractIdSlugFromUrl(url: string): string | null {
+  const match = url.match(/\/(movie|show)\/([^/?#]+)/);
+  return match ? match[2] : null;
+}
+
 const program = new Command();
 
 program
@@ -89,6 +98,19 @@ program
           console.error(
             "\nTip: Try saving the HTML with your browser and using the --file option to parse it locally."
           );
+        }
+
+        // Save output to file
+        const idSlug = extractIdSlugFromUrl(url);
+        if (idSlug) {
+          const outputFileName = `${idSlug}.output.json`;
+          const outputPath = path.join(process.cwd(), outputFileName);
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify(result, null, 2),
+            "utf-8"
+          );
+          console.error(`\n✅ Output saved to: ${outputFileName}`);
         }
 
         console.log(JSON.stringify(result, null, 2));
