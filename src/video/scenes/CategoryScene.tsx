@@ -1,10 +1,10 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
-import { COLORS, FONTS, VIDEO_HEIGHT, VIDEO_WIDTH } from "../constants";
-import { CategorySceneProps } from "../types";
+import { COLORS, FONTS, VIDEO_WIDTH } from "../constants";
+import { CategorySceneProps, MediaItem } from "../types";
 
 interface GridItemProps {
-  item: { name: string; image: string; goodwatch_score: number };
+  item: MediaItem;
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
   delay: number;
 }
@@ -16,40 +16,47 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
     extrapolateRight: "clamp",
   });
 
-  const translateY = interpolate(frame, [delay, delay + 20], [30, 0], {
+  const translateX = interpolate(frame, [delay, delay + 15], [50, 0], {
     extrapolateRight: "clamp",
   });
 
-  // Calculate position based on grid location
-  const labelColumnWidth = 50; // Width for the label column
-  const itemWidth = VIDEO_WIDTH * 0.42; // 42% of width for each item
-  const itemHeight = itemWidth * 1.5; // 3:2 aspect ratio for poster
-  const gap = 30; // Gap between items
-  const horizontalPadding =
-    (VIDEO_WIDTH - (itemWidth * 2 + gap + labelColumnWidth)) / 2;
-  const titleHeight = 80; // Space for title below image
-  const totalItemHeight = itemHeight + titleHeight;
+  // Breathing animation (1.0x to 1.02x, 2s loop)
+  const breathingScale = interpolate(
+    frame % 60,
+    [0, 30, 60],
+    [1.0, 1.02, 1.0],
+    {
+      extrapolateRight: "clamp",
+    }
+  );
 
-  // Calculate vertical positioning to center the grid
-  const topMargin = 180; // Space for category title
-  const verticalGap = 40; // Gap between rows
+  // Layout constants - 2x2 grid with 480x270px items
+  const itemWidth = 480;
+  const itemHeight = 270;
+  const gap = 20;
+  const titleHeight = 60;
+
+  // Center the grid horizontally
+  const gridWidth = itemWidth * 2 + gap;
+  const startX = (VIDEO_WIDTH - gridWidth) / 2;
+  const startY = 250; // Below category label and mini thumbnail
 
   const positions = {
     "top-left": {
-      top: topMargin,
-      left: horizontalPadding + labelColumnWidth,
+      top: startY,
+      left: startX,
     },
     "top-right": {
-      top: topMargin,
-      left: horizontalPadding + labelColumnWidth + itemWidth + gap,
+      top: startY,
+      left: startX + itemWidth + gap,
     },
     "bottom-left": {
-      top: topMargin + totalItemHeight + verticalGap,
-      left: horizontalPadding + labelColumnWidth,
+      top: startY + itemHeight + titleHeight + gap,
+      left: startX,
     },
     "bottom-right": {
-      top: topMargin + totalItemHeight + verticalGap,
-      left: horizontalPadding + labelColumnWidth + itemWidth + gap,
+      top: startY + itemHeight + titleHeight + gap,
+      left: startX + itemWidth + gap,
     },
   };
 
@@ -62,12 +69,13 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
         ...pos,
         width: itemWidth,
         opacity,
-        transform: `translateY(${translateY}px)`,
+        transform: `translateX(${translateX}px) scale(${breathingScale})`,
       }}
     >
-      {/* Image */}
+      {/* Image Container */}
       <div
         style={{
+          position: "relative",
           width: "100%",
           height: itemHeight,
           marginBottom: 10,
@@ -79,50 +87,60 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            borderRadius: 12,
-            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.6)",
+            borderRadius: 8,
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.6)",
           }}
         />
+
+        {/* Score Badge - Circular, 50px diameter, top-right */}
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            width: 50,
+            height: 50,
+            backgroundColor: COLORS.accent,
+            borderRadius: "50%",
+            border: "2px solid white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 10px rgba(92, 184, 92, 0.3)",
+          }}
+        >
+          <span
+            style={{
+              ...FONTS.score,
+              color: COLORS.text,
+            }}
+          >
+            {item.goodwatch_score}
+          </span>
+        </div>
       </div>
 
-      {/* Title */}
+      {/* Title - max 1 line, truncate with "..." */}
       <div
         style={{
           textAlign: "center",
           padding: "0 10px",
+          height: titleHeight - 10,
+          overflow: "hidden",
         }}
       >
         <span
           style={{
-            ...FONTS.small,
+            ...FONTS.recommendationTitle,
             color: COLORS.text,
             display: "block",
             lineHeight: 1.2,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {item.name}
-        </span>
-      </div>
-
-      {/* Score Badge */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          backgroundColor: COLORS.accent,
-          borderRadius: 8,
-          padding: "6px 12px",
-        }}
-      >
-        <span
-          style={{
-            fontSize: 24,
-            fontWeight: "bold",
-            color: COLORS.text,
-          }}
-        >
-          {item.goodwatch_score}
         </span>
       </div>
     </div>
@@ -133,151 +151,98 @@ export const CategoryScene: React.FC<CategorySceneProps> = ({
   categoryName,
   movies,
   tvShows,
+  sourceImage,
 }) => {
   const frame = useCurrentFrame();
 
-  // Title animation
-  const titleOpacity = interpolate(frame, [0, 15], [0, 1], {
+  // Category label cross-fade (0.2s)
+  const labelOpacity = interpolate(frame, [6, 21], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+  const labelTranslateX = interpolate(frame, [6, 21], [-50, 0], {
     extrapolateRight: "clamp",
   });
 
-  // Label column animation
-  const labelOpacity = interpolate(frame, [5, 20], [0, 1], {
+  // Mini thumbnail (always visible, subtle fade)
+  const thumbnailOpacity = interpolate(frame, [0, 15], [0.3, 1], {
     extrapolateRight: "clamp",
   });
 
   // Combine movies and TV shows (2 of each)
-  const items = [...(movies.slice(0, 2) || []), ...(tvShows.slice(0, 2) || [])];
+  const displayItems = [
+    ...(movies.slice(0, 2) || []),
+    ...(tvShows.slice(0, 2) || []),
+  ].slice(0, 4);
 
-  // Ensure we have exactly 4 items
-  const displayItems = items.slice(0, 4);
-
-  // Calculate label column positioning
-  const labelColumnWidth = 50;
-  const itemWidth = VIDEO_WIDTH * 0.42;
-  const itemHeight = itemWidth * 1.5;
-  const gap = 30;
-  const horizontalPadding =
-    (VIDEO_WIDTH - (itemWidth * 2 + gap + labelColumnWidth)) / 2;
-  const titleHeight = 80;
-  const totalItemHeight = itemHeight + titleHeight;
-  const topMargin = 180;
-  const verticalGap = 40;
+  // Begin fade transition to next category at 3.5s (105 frames)
+  const fadeOutOpacity = interpolate(frame, [105, 120], [1, 0.7], {
+    extrapolateRight: "clamp",
+  });
 
   return (
     <AbsoluteFill
       style={{
         backgroundColor: COLORS.background,
+        opacity: fadeOutOpacity,
       }}
     >
-      {/* Title */}
+      {/* Mini main content thumbnail - 100x150px, top-left corner */}
+      {sourceImage && (
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 20,
+            width: 100,
+            height: 150,
+            opacity: thumbnailOpacity,
+          }}
+        >
+          <Img
+            src={sourceImage}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: 8,
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.6)",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Category Label - next to mini thumbnail */}
       <div
         style={{
           position: "absolute",
-          top: 60,
-          width: "100%",
-          textAlign: "center",
-          opacity: titleOpacity,
+          top: 80,
+          left: 140,
+          opacity: labelOpacity,
+          transform: `translateX(${labelTranslateX}px)`,
         }}
       >
         <span
           style={{
-            ...FONTS.title,
-            color: COLORS.accent,
+            ...FONTS.categoryLabel,
+            color: COLORS.text,
           }}
         >
           {categoryName}
         </span>
       </div>
 
-      {/* Label Column */}
-      <div
-        style={{
-          position: "absolute",
-          left: horizontalPadding,
-          top: topMargin,
-          width: labelColumnWidth,
-          height: totalItemHeight * 2 + verticalGap,
-          opacity: labelOpacity,
-        }}
-      >
-        {/* MOVIE Label */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: labelColumnWidth,
-            height: totalItemHeight,
-            backgroundColor: "rgba(139, 92, 246, 0.15)",
-            borderRadius: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-          }}
-        >
-          {"MOVIE".split("").map((letter, index) => (
-            <span
-              key={index}
-              style={{
-                fontSize: 48,
-                fontWeight: "bold",
-                color: "#a78bfa",
-                lineHeight: 1,
-              }}
-            >
-              {letter}
-            </span>
-          ))}
-        </div>
-
-        {/* SHOW Label */}
-        <div
-          style={{
-            position: "absolute",
-            top: totalItemHeight + verticalGap,
-            left: 0,
-            width: labelColumnWidth,
-            height: totalItemHeight,
-            backgroundColor: "rgba(59, 130, 246, 0.15)",
-            borderRadius: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-          }}
-        >
-          {"SHOW".split("").map((letter, index) => (
-            <span
-              key={index}
-              style={{
-                fontSize: 48,
-                fontWeight: "bold",
-                color: "#60a5fa",
-                lineHeight: 1,
-              }}
-            >
-              {letter}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Grid Items */}
+      {/* Grid Items - Movie row at 0.4s (12 frames), TV row at 0.8s (24 frames) */}
       {displayItems.length >= 1 && (
-        <GridItem item={displayItems[0]} position="top-left" delay={10} />
+        <GridItem item={displayItems[0]} position="top-left" delay={12} />
       )}
       {displayItems.length >= 2 && (
-        <GridItem item={displayItems[1]} position="top-right" delay={15} />
+        <GridItem item={displayItems[1]} position="top-right" delay={17} />
       )}
       {displayItems.length >= 3 && (
-        <GridItem item={displayItems[2]} position="bottom-left" delay={20} />
+        <GridItem item={displayItems[2]} position="bottom-left" delay={24} />
       )}
       {displayItems.length >= 4 && (
-        <GridItem item={displayItems[3]} position="bottom-right" delay={25} />
+        <GridItem item={displayItems[3]} position="bottom-right" delay={29} />
       )}
     </AbsoluteFill>
   );

@@ -1,17 +1,19 @@
-import React from 'react';
-import { Sequence } from 'remotion';
+import React from "react";
+import { Sequence } from "remotion";
 import {
   SCENE_1_DURATION,
   SCENE_2_DURATION,
   SCENE_3_DURATION,
   SCENE_4_DURATION,
   SCENE_5_DURATION,
-} from './constants';
-import { Scene1 } from './scenes/Scene1';
-import { Scene2 } from './scenes/Scene2';
-import { CategoryScene } from './scenes/CategoryScene';
-import { VideoInputProps } from './types';
-import { selectItemsForScenes } from './utils/deduplicator';
+  SCENE_6_DURATION,
+} from "./constants";
+import { Scene1 } from "./scenes/Scene1";
+import { Scene2 } from "./scenes/Scene2";
+import { CategoryScene } from "./scenes/CategoryScene";
+import { Scene6 } from "./scenes/Scene6";
+import { VideoInputProps } from "./types";
+import { selectItemsForScenes } from "./utils/deduplicator";
 
 export const VideoComposition: React.FC<VideoInputProps> = ({
   data,
@@ -20,10 +22,10 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
 }) => {
   // Get all available categories (excluding "Overall")
   const movieCategories = Object.keys(data.movies).filter(
-    (cat) => cat !== 'Overall'
+    (cat) => cat !== "Overall"
   );
   const tvShowCategories = Object.keys(data.tv_shows).filter(
-    (cat) => cat !== 'Overall'
+    (cat) => cat !== "Overall"
   );
 
   // Use the first common category, or fall back to any available categories
@@ -54,13 +56,29 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
     };
   };
 
+  // Prepare category data for deduplication
+  const overallItems = getItemsForCategory("Overall");
+  const categoryData = selectedCategories.map((categoryName) => ({
+    name: categoryName,
+    ...getItemsForCategory(categoryName),
+  }));
+
   // Select items ensuring no duplicates
-  const overallItems = getItemsForCategory('Overall');
   const selectedItems = selectItemsForScenes(
     overallItems.movies,
     overallItems.tvShows,
-    selectedCategories
+    categoryData
   );
+
+  // Collect all items for Scene 6
+  const allItems = [
+    ...selectedItems.overall.movies,
+    ...selectedItems.overall.tvShows,
+    ...selectedItems.categories.flatMap((cat) => [
+      ...cat.movies,
+      ...cat.tvShows,
+    ]),
+  ];
 
   // Calculate frame offsets
   let currentFrame = 0;
@@ -77,10 +95,13 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
   currentFrame += SCENE_4_DURATION;
 
   const scene5Start = currentFrame;
+  currentFrame += SCENE_5_DURATION;
+
+  const scene6Start = currentFrame;
 
   return (
     <>
-      {/* Scene 1: "If you like X then you'll like" */}
+      {/* Scene 1: Hook */}
       <Sequence from={scene1Start} durationInFrames={SCENE_1_DURATION}>
         <Scene1
           data={data}
@@ -89,11 +110,12 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
         />
       </Sequence>
 
-      {/* Scene 2: Overall */}
+      {/* Scene 2: Overall Top Picks */}
       <Sequence from={scene2Start} durationInFrames={SCENE_2_DURATION}>
         <Scene2
           movies={selectedItems.overall.movies}
           tvShows={selectedItems.overall.tvShows}
+          sourceImage={sourceImage}
         />
       </Sequence>
 
@@ -104,6 +126,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
             categoryName={selectedItems.categories[0].name}
             movies={selectedItems.categories[0].movies}
             tvShows={selectedItems.categories[0].tvShows}
+            sourceImage={sourceImage}
           />
         </Sequence>
       )}
@@ -115,6 +138,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
             categoryName={selectedItems.categories[1].name}
             movies={selectedItems.categories[1].movies}
             tvShows={selectedItems.categories[1].tvShows}
+            sourceImage={sourceImage}
           />
         </Sequence>
       )}
@@ -126,10 +150,15 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
             categoryName={selectedItems.categories[2].name}
             movies={selectedItems.categories[2].movies}
             tvShows={selectedItems.categories[2].tvShows}
+            sourceImage={sourceImage}
           />
         </Sequence>
       )}
+
+      {/* Scene 6: Closing */}
+      <Sequence from={scene6Start} durationInFrames={SCENE_6_DURATION}>
+        <Scene6 allItems={allItems} />
+      </Sequence>
     </>
   );
 };
-

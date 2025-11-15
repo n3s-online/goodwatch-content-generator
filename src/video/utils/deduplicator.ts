@@ -1,4 +1,4 @@
-import { MediaItem } from '../types';
+import { MediaItem } from "../types";
 
 /**
  * Tracks used items and provides methods to get non-duplicate items
@@ -29,14 +29,14 @@ export class ItemDeduplicator {
    */
   getUnusedItems(items: MediaItem[], count: number): MediaItem[] {
     const unused: MediaItem[] = [];
-    
+
     for (const item of items) {
       if (!this.isUsed(item) && unused.length < count) {
         unused.push(item);
         this.markUsed(item);
       }
     }
-    
+
     return unused;
   }
 
@@ -52,32 +52,40 @@ export class ItemDeduplicator {
  * Select items for video scenes ensuring no duplicates
  */
 export function selectItemsForScenes(
-  movies: MediaItem[],
-  tvShows: MediaItem[],
-  categories: string[]
+  overallMovies: MediaItem[],
+  overallTvShows: MediaItem[],
+  categoryData: Array<{
+    name: string;
+    movies: MediaItem[];
+    tvShows: MediaItem[];
+  }>
 ): {
   overall: { movies: MediaItem[]; tvShows: MediaItem[] };
-  categories: Array<{ name: string; movies: MediaItem[]; tvShows: MediaItem[] }>;
+  categories: Array<{
+    name: string;
+    movies: MediaItem[];
+    tvShows: MediaItem[];
+  }>;
 } {
   const deduplicator = new ItemDeduplicator();
 
   // Scene 2: Overall - 2 movies, 2 TV shows
-  const overallMovies = deduplicator.getUnusedItems(movies, 2);
-  const overallTvShows = deduplicator.getUnusedItems(tvShows, 2);
+  const selectedOverallMovies = deduplicator.getUnusedItems(overallMovies, 2);
+  const selectedOverallTvShows = deduplicator.getUnusedItems(overallTvShows, 2);
 
   // Scenes 3-5: Categories - 2 movies, 2 TV shows each
-  const categoryScenes = categories.slice(0, 3).map(categoryName => ({
-    name: categoryName,
-    movies: deduplicator.getUnusedItems(movies, 2),
-    tvShows: deduplicator.getUnusedItems(tvShows, 2),
+  // Use category-specific items, but ensure no duplicates across all scenes
+  const categoryScenes = categoryData.slice(0, 3).map((category) => ({
+    name: category.name,
+    movies: deduplicator.getUnusedItems(category.movies, 2),
+    tvShows: deduplicator.getUnusedItems(category.tvShows, 2),
   }));
 
   return {
     overall: {
-      movies: overallMovies,
-      tvShows: overallTvShows,
+      movies: selectedOverallMovies,
+      tvShows: selectedOverallTvShows,
     },
     categories: categoryScenes,
   };
 }
-

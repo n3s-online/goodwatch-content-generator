@@ -30,10 +30,10 @@ export interface CategorySceneProps {
   categoryName: string;
   movies: MediaItem[];
   tvShows: MediaItem[];
+  sourceImage?: string;
 }
 
 export interface GridItemProps {
   item: MediaItem;
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
 }
-
