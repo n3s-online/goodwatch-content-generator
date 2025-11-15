@@ -223,7 +223,7 @@ export const Scene2: React.FC<Scene2Props> = ({ movies, tvShows }) => {
             <span
               key={index}
               style={{
-                fontSize: 60,
+                fontSize: 48,
                 fontWeight: "bold",
                 color: "#a78bfa",
                 lineHeight: 1,
@@ -255,7 +255,7 @@ export const Scene2: React.FC<Scene2Props> = ({ movies, tvShows }) => {
             <span
               key={index}
               style={{
-                fontSize: 60,
+                fontSize: 48,
                 fontWeight: "bold",
                 color: "#60a5fa",
                 lineHeight: 1,

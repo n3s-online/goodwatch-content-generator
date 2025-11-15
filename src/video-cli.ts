@@ -5,10 +5,16 @@ import { renderVideo } from "./video/renderer";
 import { RelatedContent } from "./video/types";
 
 /**
- * Get all .output.json files in the current directory
+ * Get all .output.json files in the output directory
  */
 function getOutputFiles(): string[] {
-  const files = fs.readdirSync(process.cwd());
+  const outputDir = path.join(process.cwd(), "output");
+
+  if (!fs.existsSync(outputDir)) {
+    return [];
+  }
+
+  const files = fs.readdirSync(outputDir);
   return files.filter((file) => file.endsWith(".output.json"));
 }
 
@@ -20,7 +26,7 @@ async function selectOutputFile(): Promise<string> {
 
   if (files.length === 0) {
     throw new Error(
-      "No .output.json files found in the current directory. Please run the parser first."
+      "No .output.json files found in the output/ directory. Please run 'pnpm scrape' first."
     );
   }
 
@@ -93,8 +99,8 @@ export async function createVideo(): Promise<void> {
     // Select output file
     const selectedFile = await selectOutputFile();
 
-    // Read the data
-    const filePath = path.join(process.cwd(), selectedFile);
+    // Read the data from output directory
+    const filePath = path.join(process.cwd(), "output", selectedFile);
     const fileContent = fs.readFileSync(filePath, "utf-8");
     const data: RelatedContent = JSON.parse(fileContent);
 

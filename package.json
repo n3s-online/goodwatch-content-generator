@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/cli.ts",
+    "scrape": "ts-node src/cli.ts scrape",
     "create-video": "ts-node src/cli.ts create-video",
     "test": "ts-node src/parser.test.ts",
     "test:legacy": "ts-node src/test.ts"

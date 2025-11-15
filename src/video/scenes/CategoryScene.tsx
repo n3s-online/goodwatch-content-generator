@@ -222,7 +222,7 @@ export const CategoryScene: React.FC<CategorySceneProps> = ({
             <span
               key={index}
               style={{
-                fontSize: 60,
+                fontSize: 48,
                 fontWeight: "bold",
                 color: "#a78bfa",
                 lineHeight: 1,
@@ -254,7 +254,7 @@ export const CategoryScene: React.FC<CategorySceneProps> = ({
             <span
               key={index}
               style={{
-                fontSize: 60,
+                fontSize: 48,
                 fontWeight: "bold",
                 color: "#60a5fa",
                 lineHeight: 1,
