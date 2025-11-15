@@ -26,10 +26,12 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
   });
 
   // Calculate position based on grid location
+  const labelColumnWidth = 50; // Width for the label column
   const itemWidth = VIDEO_WIDTH * 0.42; // 42% of width for each item
   const itemHeight = itemWidth * 1.5; // 3:2 aspect ratio for poster
   const gap = 30; // Gap between items
-  const horizontalPadding = (VIDEO_WIDTH - (itemWidth * 2 + gap)) / 2;
+  const horizontalPadding =
+    (VIDEO_WIDTH - (itemWidth * 2 + gap + labelColumnWidth)) / 2;
   const titleHeight = 80; // Space for title below image
   const totalItemHeight = itemHeight + titleHeight;
 
@@ -40,19 +42,19 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
   const positions = {
     "top-left": {
       top: topMargin,
-      left: horizontalPadding,
+      left: horizontalPadding + labelColumnWidth,
     },
     "top-right": {
       top: topMargin,
-      left: horizontalPadding + itemWidth + gap,
+      left: horizontalPadding + labelColumnWidth + itemWidth + gap,
     },
     "bottom-left": {
       top: topMargin + totalItemHeight + verticalGap,
-      left: horizontalPadding,
+      left: horizontalPadding + labelColumnWidth,
     },
     "bottom-right": {
       top: topMargin + totalItemHeight + verticalGap,
-      left: horizontalPadding + itemWidth + gap,
+      left: horizontalPadding + labelColumnWidth + itemWidth + gap,
     },
   };
 
@@ -140,11 +142,28 @@ export const Scene2: React.FC<Scene2Props> = ({ movies, tvShows }) => {
     extrapolateRight: "clamp",
   });
 
+  // Label column animation
+  const labelOpacity = interpolate(frame, [5, 20], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+
   // Combine movies and TV shows (2 of each)
   const items = [...(movies.slice(0, 2) || []), ...(tvShows.slice(0, 2) || [])];
 
   // Ensure we have exactly 4 items
   const displayItems = items.slice(0, 4);
+
+  // Calculate label column positioning
+  const labelColumnWidth = 50;
+  const itemWidth = VIDEO_WIDTH * 0.42;
+  const itemHeight = itemWidth * 1.5;
+  const gap = 30;
+  const horizontalPadding =
+    (VIDEO_WIDTH - (itemWidth * 2 + gap + labelColumnWidth)) / 2;
+  const titleHeight = 80;
+  const totalItemHeight = itemHeight + titleHeight;
+  const topMargin = 180;
+  const verticalGap = 40;
 
   return (
     <AbsoluteFill
@@ -170,6 +189,82 @@ export const Scene2: React.FC<Scene2Props> = ({ movies, tvShows }) => {
         >
           Overall
         </span>
+      </div>
+
+      {/* Label Column */}
+      <div
+        style={{
+          position: "absolute",
+          left: horizontalPadding,
+          top: topMargin,
+          width: labelColumnWidth,
+          height: totalItemHeight * 2 + verticalGap,
+          opacity: labelOpacity,
+        }}
+      >
+        {/* MOVIE Label */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: labelColumnWidth,
+            height: totalItemHeight,
+            backgroundColor: "rgba(139, 92, 246, 0.15)",
+            borderRadius: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          {"MOVIE".split("").map((letter, index) => (
+            <span
+              key={index}
+              style={{
+                fontSize: 60,
+                fontWeight: "bold",
+                color: "#a78bfa",
+                lineHeight: 1,
+              }}
+            >
+              {letter}
+            </span>
+          ))}
+        </div>
+
+        {/* SHOW Label */}
+        <div
+          style={{
+            position: "absolute",
+            top: totalItemHeight + verticalGap,
+            left: 0,
+            width: labelColumnWidth,
+            height: totalItemHeight,
+            backgroundColor: "rgba(59, 130, 246, 0.15)",
+            borderRadius: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          {"SHOW".split("").map((letter, index) => (
+            <span
+              key={index}
+              style={{
+                fontSize: 60,
+                fontWeight: "bold",
+                color: "#60a5fa",
+                lineHeight: 1,
+              }}
+            >
+              {letter}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Grid Items */}
