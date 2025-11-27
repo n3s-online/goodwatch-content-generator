@@ -1,5 +1,11 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
+import {
+  AbsoluteFill,
+  Img,
+  interpolate,
+  useCurrentFrame,
+  staticFile,
+} from "remotion";
 import { COLORS, VIDEO_HEIGHT, VIDEO_WIDTH } from "../constants";
 import { MediaItem, ClosingSceneProps } from "../types";
 import { formatCategoryLabel } from "../utils/formatCategory";
@@ -47,7 +53,7 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({
   const gridWidth = columns * itemWidth + (columns - 1) * gap;
   const gridHeight = rows * (itemHeight + labelHeight) + (rows - 1) * gap;
   const startX = (VIDEO_WIDTH - gridWidth) / 2;
-  const startY = (VIDEO_HEIGHT - gridHeight) / 2 - 20; // Offset up for title
+  const startY = (VIDEO_HEIGHT - gridHeight) / 2 - 40; // Offset down closer to title
 
   // Show all 16 items
   const displayItems = allItems.slice(0, 16);
@@ -58,15 +64,19 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({
         backgroundColor: COLORS.background,
       }}
     >
-      {/* Title Text - "Your Recommendations" */}
+      {/* Title Text - Two lines */}
       <div
         style={{
           position: "absolute",
-          top: 80,
+          top: 60,
           left: 0,
           width: VIDEO_WIDTH,
           textAlign: "center",
           opacity: titleOpacity,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 12,
         }}
       >
         <span
@@ -79,6 +89,17 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({
           }}
         >
           Your Recommendations
+        </span>
+        <span
+          style={{
+            fontSize: 44,
+            fontWeight: "bold",
+            fontFamily: "Helvetica Neue, Arial, sans-serif",
+            color: COLORS.accent,
+            letterSpacing: "1px",
+          }}
+        >
+          GoodWatch.app
         </span>
       </div>
 
@@ -200,30 +221,14 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({
           opacity: logoOpacity,
         }}
       >
-        {/* Simple GoodWatch logo representation - green circle with white G */}
-        <div
+        <Img
+          src={staticFile("goodwatch-logo.svg")}
           style={{
-            width: 120,
-            height: 120,
-            backgroundColor: COLORS.accent,
-            borderRadius: "50%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            boxShadow: "0 0 20px rgba(92, 184, 92, 0.5)",
+            width: 200,
+            height: 200,
+            filter: "drop-shadow(0 0 20px rgba(92, 184, 92, 0.5))",
           }}
-        >
-          <span
-            style={{
-              fontSize: 72,
-              fontWeight: "bold",
-              color: COLORS.text,
-              fontFamily: "Helvetica Neue, Arial, sans-serif",
-            }}
-          >
-            G
-          </span>
-        </div>
+        />
       </div>
 
       {/* Fade to black overlay */}
@@ -242,4 +247,3 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({
     </AbsoluteFill>
   );
 };
-
