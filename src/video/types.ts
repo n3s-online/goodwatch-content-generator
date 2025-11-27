@@ -26,11 +26,19 @@ export interface SceneProps {
   sourceImage: string;
 }
 
-export interface CategorySceneProps {
+export interface OverallSceneProps {
+  movies: MediaItem[];
+  tvShows: MediaItem[];
+}
+
+export interface CategoryRecommendationsSceneProps {
   categoryName: string;
   movies: MediaItem[];
   tvShows: MediaItem[];
-  sourceImage?: string;
+}
+
+export interface ClosingSceneProps {
+  allItems: MediaItem[];
 }
 
 export interface GridItemProps {

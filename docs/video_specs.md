@@ -31,7 +31,9 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 ## Scene Breakdown & Timing
 
-**Scene Order:** Hook → Category 1 → Category 2 → Category 3 → Overall → Closing
+**Scene Order:** Hook (4s) → Category 1 (4s) → Category 2 (4s) → Category 3 (4s) → Overall (4s) → Closing (5s)
+
+**Total Duration:** ~25 seconds
 
 ### Scene 1: Hook (4 seconds)
 
@@ -41,18 +43,20 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 ```
 ┌─────────────────────────┐
+│  "If you liked"         │ ← White, 42px, font-weight 600, centered
 │                         │
-│  "If you liked"         │ ← White, 32px, centered
+│                         │
 │                         │
 │   [MAIN CONTENT IMAGE]  │ ← Full poster/cover (contained, not cropped)
-│    (Full Poster)        │   Centered with padding, maintains aspect ratio
+│    (Full Poster)        │   Large - Takes up 82% of screen height
+│                         │   66% width, centered
+│                         │   Maintains aspect ratio
 │                         │   Zooms from 1.0x to 1.05x over 4 seconds
+│                         │   Minimal padding (30px top, 20px sides)
 │                         │
-│      [TITLE]            │ ← White, 48px bold, centered
-│                         │
-│ "then you need to       │ ← White, 32px, centered
+│      [TITLE]            │ ← White, 56px bold, centered
+│ "then you need to       │ ← White, 42px, font-weight 600, centered
 │      watch..."          │
-│                         │
 └─────────────────────────┘
 ```
 
@@ -70,63 +74,33 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 ---
 
-### Scene 2: Overall Top Picks (7 seconds)
+### Scene 2-4: Category-Specific Recommendations (4 seconds each × 3 = 12 seconds)
 
-**Purpose:** Show the 4 most universally similar recommendations
+**Purpose:** Show recommendations based on specific DNA attributes
 
 **Layout:**
 
 ```
 ┌─────────────────────────┐
-│ ┌─────────┐             │ ← Mini main content thumbnail
-│ │ [MAIN] │  "Overall"   │    (100x150px, top-left corner)
-│ └─────────┘             │    + Category label (white, 28px)
 │                         │
-│  ┌────────┬────────┐    │
-│  │ MOVIE  │ MOVIE  │    │ ← 2 movie covers
-│  │  [1]   │  [2]   │    │   (480x270px each)
-│  │ Title  │ Title  │    │   Score badge top-right
-│  │  84    │  92    │    │   Title below (white, 20px)
-│  └────────┴────────┘    │
+│     [CATEGORY NAME]     │ ← Centered, white, 108px bold
 │                         │
-│  ┌────────┬────────┐    │
-│  │  SHOW  │  SHOW  │    │ ← 2 TV show covers
-│  │  [1]   │  [2]   │    │   (same styling as movies)
-│  │ Title  │ Title  │    │
-│  │  88    │  79    │    │
-│  └────────┴────────┘    │
+│  ┌──────────┬──────────┐│
+│  │  MOVIE   │  MOVIE   ││ ← 2 movie posters (full aspect ratio)
+│  │   [1]    │   [2]    ││   Each ~450x675px (maintains poster ratio, 10% smaller)
+│  │  Title   │  Title   ││   Score badge top-right
+│  │   84     │   92     ││   Title below (white, 40px, 2x larger)
+│  └──────────┴──────────┘│
+│                         │
+│  ┌──────────┬──────────┐│
+│  │   SHOW   │   SHOW   ││ ← 2 TV show posters (full aspect ratio)
+│  │   [1]    │   [2]    ││   Same styling as movies
+│  │  Title   │  Title   ││
+│  │   88     │   79     ││
+│  └──────────┴──────────┘│
+│                         │
 └─────────────────────────┘
 ```
-
-**Animation:**
-
-- 0.0s: Category label "Overall" slides in from left
-- 0.3s: Main content thumbnail scales in from top-left
-- 0.5s: Movie row slides in from right
-- 1.2s: TV show row slides in from right
-- All elements have subtle "breathing" scale animation (1.0x to 1.02x, 2s loop)
-
-**Elements:**
-
-- **Mini main content thumbnail:** 100x150px, top-left with 20px padding
-- **Category label:** "Overall" in white, 28px, positioned next to mini thumbnail
-- **Row labels:** "MOVIES" and "TV SHOWS" on the left edge (rotated 90°, gray, 16px, uppercase)
-- **Cover images:** 480x270px each (landscape crop of poster)
-- **Score badges:**
-  - Position: Top-right corner of each image
-  - Style: Circular, 50px diameter, green background `#5cb85c`
-  - Text: White, 20px bold, format: "84"
-  - Border: 2px solid white
-- **Titles:** Below each image, white, 20px, max 1 line (truncate with "...")
-- **Spacing:** 20px padding between all elements
-
----
-
-### Scene 3-5: Category-Specific Recommendations (4 seconds each × 3 = 12 seconds)
-
-**Purpose:** Show recommendations based on specific DNA attributes
-
-**Layout:** Same as Scene 2, but with different category labels
 
 **Category Examples:**
 
@@ -140,17 +114,44 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 **Animation:**
 
-- 0.0s: Previous scene fades out slightly (opacity 1.0 to 0.3)
-- 0.2s: New category label cross-fades in
-- 0.4s: Movie row cross-fades in with slide from right
-- 0.8s: TV show row cross-fades in with slide from right
+- 0.0s: Category label fades in
+- 0.4s: Movie row slides in from right (no breathing/zoom animation during scene)
+- 0.8s: TV show row slides in from right (no breathing/zoom animation during scene)
 - 3.5s: Begin fade transition to next category
 
-**Elements:** Same structure as Scene 2, only category label changes
+**Elements:**
+
+- **Category label:** Centered at top, white, 108px bold (3x larger), letter-spacing: 2px
+- **Cover images:** Full poster aspect ratio (~450x675px each, 10% smaller), maintains original proportions
+- **Score badges:**
+  - Position: Top-right corner of each image
+  - Style: Circular, 50px diameter, green background `#5cb85c`
+  - Text: White, 20px bold, format: "84"
+  - Border: 2px solid white
+- **Titles:** Below each image, white, 40px (2x larger), font-weight 600, max 1 line (truncate with "...")
+- **Spacing:** 20px padding between all elements
+- **Note:** No breathing/zoom animation during the scene - only intro slide animation
+- **Grid:** 2x2 layout, fills full screen height
 
 ---
 
-### Scene 6: Closing (2 seconds)
+### Scene 5: Overall Top Picks (4 seconds)
+
+**Purpose:** Show the 4 most universally similar recommendations
+
+**Layout:** Same as Scenes 2-4, but with "Overall" as the category label
+
+**Animation:**
+
+- 0.0s: "Overall" label fades in
+- 0.4s: Movie row slides in from right (no breathing/zoom animation during scene)
+- 0.8s: TV show row slides in from right (no breathing/zoom animation during scene)
+
+**Elements:** Same structure as category scenes, with "Overall" label (108px bold)
+
+---
+
+### Scene 6: Closing (5 seconds)
 
 **Purpose:** Quick visual closure and brand reinforcement
 
@@ -159,8 +160,9 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 ```
 ┌─────────────────────────┐
 │                         │
+│ "Your Recommendations"  │ ← White, 56px bold, centered
 │                         │
-│    [4x4 grid of all]    │ ← Mosaic of all 12 recommendations
+│    [3x4 grid of all]    │ ← Mosaic of all 12 recommendations
 │    [cover thumbnails]   │    shown (small, 3×4 grid)
 │                         │
 │                         │
@@ -171,12 +173,15 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 **Animation:**
 
-- 0.0s: All recommendation covers scale down and arrange into grid
+- 0.0s: All recommendation covers scale down and arrange into grid (0.0s to 0.5s)
+- 0.2s: "Your Recommendations" title fades in
 - 0.5s: GoodWatch logo fades in
-- 1.5s: Fade to black
+- 0.5s-3.5s: Hold on screen (3 seconds)
+- 3.5s-5.0s: Fade to black (1.5 seconds)
 
 **Elements:**
 
+- Title text: "Your Recommendations" (white, 56px bold, centered at top)
 - 12 mini cover thumbnails (from all scenes) in 3 columns × 4 rows
 - GoodWatch logo (green circle with white G)
 
@@ -212,11 +217,12 @@ Use exact category names from GoodWatch DNA system:
 
 ### Scene Selection Logic
 
-1. Always use "Overall" category for Scene 2
-2. For Scenes 3-5, select the top 3 DNA categories (excluding "Overall")
-3. Categories should be ordered by relevance/prominence on the GoodWatch page
-4. If fewer than 3 additional categories exist, reduce total video length accordingly
-5. Do not re-use any movies or shows between scenes, if its been used in a previous scene then choose the next movie/show
+1. Scene 1: Hook with source content
+2. Scenes 2-4: Top 3 DNA categories (excluding "Overall"), ordered by relevance/prominence
+3. Scene 5: "Overall" category (moved to end for broader appeal)
+4. Scene 6: Closing with all recommendations
+5. If fewer than 3 additional categories exist, reduce total video length accordingly
+6. Do not re-use any movies or shows between scenes, if its been used in a previous scene then choose the next movie/show
 
 ---
 
@@ -226,17 +232,23 @@ Use exact category names from GoodWatch DNA system:
 
 - **Main Title (Scene 1):** 48px bold, white, 2px text shadow for readability
 - **Hook Text:** 32px regular, white
-- **Category Labels:** 28px bold, white, letter-spacing: 1px
+- **Category Labels:** 36px bold, white, letter-spacing: 1px, centered
 - **Recommendation Titles:** 20px regular, white
 - **Scores:** 20px bold, white
-- **Row Labels:** 16px uppercase, gray `#a0a0a0`, rotated -90deg
 
 ### Image Handling
 
-- **Cover Images:**
-  - Crop to 16:9 landscape format (centered crop)
+- **Scene 1 Cover Image:**
+  - Display full poster/cover (no cropping)
+  - Maintain original aspect ratio
+  - Contain within available space with padding
   - Apply subtle vignette (darker edges) for depth
   - Ensure minimum quality 720p
+- **Recommendation Cover Images (Scenes 2-5):**
+  - Display full poster aspect ratio (typically 2:3)
+  - Maintain original proportions (no cropping to landscape)
+  - Each poster approximately 500x750px
+  - Apply subtle vignette for depth
   - Fallback: Use solid color with title text if image unavailable
 - **Score Badges:**
   - Position: Top-right corner, 10px from edges

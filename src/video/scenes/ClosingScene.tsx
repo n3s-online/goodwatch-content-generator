@@ -1,15 +1,12 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import { COLORS, VIDEO_HEIGHT, VIDEO_WIDTH } from "../constants";
-import { MediaItem } from "../types";
+import { MediaItem, ClosingSceneProps } from "../types";
 
-interface Scene6Props {
-  allItems: MediaItem[]; // All 12 recommendations from the video
-}
-
-export const Scene6: React.FC<Scene6Props> = ({ allItems }) => {
+export const ClosingScene: React.FC<ClosingSceneProps> = ({ allItems }) => {
   const frame = useCurrentFrame();
 
+  // Scene is now 5 seconds (150 frames)
   // All recommendation covers scale down and arrange into grid (0.0s to 0.5s)
   const gridOpacity = interpolate(frame, [0, 15], [0, 1], {
     extrapolateRight: "clamp",
@@ -19,13 +16,18 @@ export const Scene6: React.FC<Scene6Props> = ({ allItems }) => {
     extrapolateRight: "clamp",
   });
 
+  // Title text fades in at 0.2s (6 frames)
+  const titleOpacity = interpolate(frame, [6, 21], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+
   // GoodWatch logo fades in at 0.5s (15 frames)
   const logoOpacity = interpolate(frame, [15, 30], [0, 1], {
     extrapolateRight: "clamp",
   });
 
-  // Fade to black at 1.5s (45 frames)
-  const fadeToBlack = interpolate(frame, [45, 60], [0, 1], {
+  // Hold for 3 seconds, then fade to black at 3.5s (105 frames) over 1.5s
+  const fadeToBlack = interpolate(frame, [105, 150], [0, 1], {
     extrapolateRight: "clamp",
   });
 
@@ -40,7 +42,7 @@ export const Scene6: React.FC<Scene6Props> = ({ allItems }) => {
   const gridWidth = columns * itemWidth + (columns - 1) * gap;
   const gridHeight = rows * itemHeight + (rows - 1) * gap;
   const startX = (VIDEO_WIDTH - gridWidth) / 2;
-  const startY = (VIDEO_HEIGHT - gridHeight) / 2 - 100; // Offset up for logo
+  const startY = (VIDEO_HEIGHT - gridHeight) / 2 - 50; // Offset up for logo and title
 
   // Take first 12 items
   const displayItems = allItems.slice(0, 12);
@@ -51,6 +53,30 @@ export const Scene6: React.FC<Scene6Props> = ({ allItems }) => {
         backgroundColor: COLORS.background,
       }}
     >
+      {/* Title Text - "Your Recommendations" */}
+      <div
+        style={{
+          position: "absolute",
+          top: 80,
+          left: 0,
+          width: VIDEO_WIDTH,
+          textAlign: "center",
+          opacity: titleOpacity,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 56,
+            fontWeight: "bold",
+            fontFamily: "Helvetica Neue, Arial, sans-serif",
+            color: COLORS.text,
+            letterSpacing: "1px",
+          }}
+        >
+          Your Recommendations
+        </span>
+      </div>
+
       {/* Grid of all 12 recommendations */}
       <div
         style={{

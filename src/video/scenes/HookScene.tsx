@@ -2,28 +2,15 @@ import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import {
   COLORS,
-  FONTS,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
   SCENE_1_DURATION,
 } from "../constants";
 import { SceneProps } from "../types";
 
-// Hook text variations
-const HOOK_VARIATIONS = [
-  "If you loved",
-  "Obsessed with",
-  "Finished",
-  "Can't get enough of",
-];
-
-export const Scene1: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
+export const HookScene: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
   const frame = useCurrentFrame();
   const totalFrames = SCENE_1_DURATION;
-
-  // Select a random hook variation (deterministic based on title)
-  const hookIndex = sourceTitle.length % HOOK_VARIATIONS.length;
-  const hookText = HOOK_VARIATIONS[hookIndex];
 
   // Image zoom animation: 1.0x to 1.05x over 4 seconds
   const imageScale = interpolate(frame, [0, totalFrames], [1.0, 1.05], {
@@ -48,59 +35,25 @@ export const Scene1: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
     <AbsoluteFill
       style={{
         backgroundColor: COLORS.background,
+        opacity: fadeOutOpacity,
       }}
     >
-      {/* Main Content Cover Image - 60% of screen height */}
+      {/* Full Layout Container */}
       <div
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           width: VIDEO_WIDTH,
-          height: VIDEO_HEIGHT * 0.6,
-          overflow: "hidden",
-        }}
-      >
-        <Img
-          src={sourceImage}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transform: `scale(${imageScale})`,
-            filter: frame >= 90 ? "blur(2px)" : "none",
-          }}
-        />
-        {/* Overlay for text readability */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: COLORS.overlay,
-          }}
-        />
-      </div>
-
-      {/* Text Section - Bottom 40% */}
-      <div
-        style={{
-          position: "absolute",
-          top: VIDEO_HEIGHT * 0.6,
-          left: 0,
-          width: VIDEO_WIDTH,
-          height: VIDEO_HEIGHT * 0.4,
+          height: VIDEO_HEIGHT,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: "flex-start",
           alignItems: "center",
-          padding: "0 60px",
-          opacity: fadeOutOpacity,
+          padding: "30px 20px 20px 20px",
         }}
       >
-        {/* "If you loved" / variation */}
+        {/* "If you liked" - Top */}
         <div
           style={{
             opacity: textOpacity,
@@ -110,12 +63,51 @@ export const Scene1: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
         >
           <span
             style={{
-              ...FONTS.hookText,
+              fontSize: 42,
+              fontWeight: "600",
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
               color: COLORS.text,
             }}
           >
-            {hookText}
+            If you liked
           </span>
+        </div>
+
+        {/* Full Poster Image - Center, contained - 66% width */}
+        <div
+          style={{
+            width: "100%",
+            height: VIDEO_HEIGHT * 0.82,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 15,
+            opacity: textOpacity,
+            transform: `translateY(${textTranslateY}px)`,
+          }}
+        >
+          <div
+            style={{
+              width: "66%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Img
+              src={sourceImage}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+                borderRadius: 12,
+                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.8)",
+                transform: `scale(${imageScale})`,
+                filter: frame >= 90 ? "blur(2px)" : "none",
+              }}
+            />
+          </div>
         </div>
 
         {/* Title */}
@@ -123,23 +115,27 @@ export const Scene1: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
           style={{
             opacity: textOpacity,
             transform: `translateY(${textTranslateY}px)`,
-            marginBottom: 20,
+            marginBottom: 15,
             textAlign: "center",
+            paddingLeft: 20,
+            paddingRight: 20,
           }}
         >
           <span
             style={{
-              ...FONTS.mainTitle,
+              fontSize: 56,
+              fontWeight: "bold",
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
               color: COLORS.text,
             }}
           >
-            {sourceTitle.length > 25
-              ? sourceTitle.substring(0, 22) + "..."
+            {sourceTitle.length > 20
+              ? sourceTitle.substring(0, 17) + "..."
               : sourceTitle}
           </span>
         </div>
 
-        {/* "you need to watch..." */}
+        {/* "then you need to watch..." - Bottom */}
         <div
           style={{
             opacity: textOpacity,
@@ -148,14 +144,19 @@ export const Scene1: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
         >
           <span
             style={{
-              ...FONTS.hookText,
+              fontSize: 42,
+              fontWeight: "600",
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
               color: COLORS.text,
+              textAlign: "center",
+              display: "block",
             }}
           >
-            you need to watch...
+            then you need to watch...
           </span>
         </div>
       </div>
     </AbsoluteFill>
   );
 };
+

@@ -1,13 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import { COLORS, FONTS, VIDEO_HEIGHT, VIDEO_WIDTH } from "../constants";
-import { MediaItem } from "../types";
-
-interface Scene2Props {
-  movies: MediaItem[];
-  tvShows: MediaItem[];
-  sourceImage?: string; // Mini thumbnail
-}
+import { MediaItem, OverallSceneProps } from "../types";
 
 interface GridItemProps {
   item: MediaItem;
@@ -26,26 +20,22 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
     extrapolateRight: "clamp",
   });
 
-  // Breathing animation (1.0x to 1.02x, 2s loop)
-  const breathingScale = interpolate(
-    frame % 60,
-    [0, 30, 60],
-    [1.0, 1.02, 1.0],
-    {
-      extrapolateRight: "clamp",
-    }
-  );
-
-  // Layout constants - 2x2 grid with 480x270px items
-  const itemWidth = 480;
-  const itemHeight = 270;
+  // Layout constants - 2x2 grid with full poster aspect ratio (10% smaller)
+  const itemWidth = 450;
+  const itemHeight = 675; // Poster aspect ratio (2:3)
   const gap = 20;
-  const titleHeight = 60;
+  const titleHeight = 80; // Increased for larger titles
 
   // Center the grid horizontally
   const gridWidth = itemWidth * 2 + gap;
   const startX = (VIDEO_WIDTH - gridWidth) / 2;
-  const startY = 250; // Below category label and mini thumbnail
+
+  // Center the grid vertically (with space for category label at top)
+  const categoryLabelHeight = 100;
+  const totalGridHeight = itemHeight * 2 + titleHeight * 2 + gap;
+  const startY =
+    categoryLabelHeight +
+    (VIDEO_HEIGHT - categoryLabelHeight - totalGridHeight) / 2;
 
   const positions = {
     "top-left": {
@@ -75,7 +65,7 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
         ...pos,
         width: itemWidth,
         opacity,
-        transform: `translateX(${translateX}px) scale(${breathingScale})`,
+        transform: `translateX(${translateX}px)`,
       }}
     >
       {/* Image Container */}
@@ -126,7 +116,7 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
         </div>
       </div>
 
-      {/* Title - max 1 line, truncate with "..." */}
+      {/* Title - 2x larger */}
       <div
         style={{
           textAlign: "center",
@@ -137,7 +127,9 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
       >
         <span
           style={{
-            ...FONTS.recommendationTitle,
+            fontSize: 40,
+            fontWeight: "600",
+            fontFamily: "Helvetica Neue, Arial, sans-serif",
             color: COLORS.text,
             display: "block",
             lineHeight: 1.2,
@@ -153,26 +145,11 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
   );
 };
 
-export const Scene2: React.FC<Scene2Props> = ({
-  movies,
-  tvShows,
-  sourceImage,
-}) => {
+export const OverallScene: React.FC<OverallSceneProps> = ({ movies, tvShows }) => {
   const frame = useCurrentFrame();
 
-  // Category label animation - slides in from left at 0.0s
+  // Category label fades in (0.0s)
   const labelOpacity = interpolate(frame, [0, 15], [0, 1], {
-    extrapolateRight: "clamp",
-  });
-  const labelTranslateX = interpolate(frame, [0, 15], [-50, 0], {
-    extrapolateRight: "clamp",
-  });
-
-  // Mini thumbnail animation - scales in from top-left at 0.3s (9 frames)
-  const thumbnailOpacity = interpolate(frame, [9, 24], [0, 1], {
-    extrapolateRight: "clamp",
-  });
-  const thumbnailScale = interpolate(frame, [9, 24], [0.5, 1], {
     extrapolateRight: "clamp",
   });
 
@@ -188,46 +165,24 @@ export const Scene2: React.FC<Scene2Props> = ({
         backgroundColor: COLORS.background,
       }}
     >
-      {/* Mini main content thumbnail - 100x150px, top-left corner */}
-      {sourceImage && (
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            left: 20,
-            width: 100,
-            height: 150,
-            opacity: thumbnailOpacity,
-            transform: `scale(${thumbnailScale})`,
-          }}
-        >
-          <Img
-            src={sourceImage}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              borderRadius: 8,
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.6)",
-            }}
-          />
-        </div>
-      )}
-
-      {/* Category Label "Overall" - next to mini thumbnail */}
+      {/* Category Label - "Overall" centered at top - 3x larger */}
       <div
         style={{
           position: "absolute",
-          top: 80,
-          left: 140,
+          top: 40,
+          left: 0,
+          width: VIDEO_WIDTH,
+          textAlign: "center",
           opacity: labelOpacity,
-          transform: `translateX(${labelTranslateX}px)`,
         }}
       >
         <span
           style={{
-            ...FONTS.categoryLabel,
+            fontSize: 108,
+            fontWeight: "bold",
+            fontFamily: "Helvetica Neue, Arial, sans-serif",
             color: COLORS.text,
+            letterSpacing: "2px",
           }}
         >
           Overall
@@ -250,3 +205,4 @@ export const Scene2: React.FC<Scene2Props> = ({
     </AbsoluteFill>
   );
 };
+
