@@ -8,9 +8,9 @@ import {
 } from "../constants";
 import { SceneProps } from "../types";
 
-export const HookScene: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) => {
+export const HookScene: React.FC<SceneProps> = ({ sourceTitle, sourceImage, durationInFrames = SCENE_1_DURATION }) => {
   const frame = useCurrentFrame();
-  const totalFrames = SCENE_1_DURATION;
+  const totalFrames = durationInFrames;
 
   // Image zoom animation: 1.0x to 1.08x over 3 seconds
   const imageScale = interpolate(frame, [0, totalFrames], [1.0, 1.08], {
@@ -36,8 +36,9 @@ export const HookScene: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) =>
     }
   );
 
-  // Fade transition at 2.5s (75 frames)
-  const fadeOutOpacity = interpolate(frame, [75, totalFrames], [1, 0.7], {
+  // Fade transition starts 0.5s before end (15 frames before end)
+  const fadeOutStart = Math.max(0, totalFrames - 15);
+  const fadeOutOpacity = interpolate(frame, [fadeOutStart, totalFrames], [1, 0.7], {
     extrapolateRight: "clamp",
   });
 
@@ -116,7 +117,7 @@ export const HookScene: React.FC<SceneProps> = ({ sourceTitle, sourceImage }) =>
                 borderRadius: 16,
                 transform: `scale(${imageScale})`,
                 transformOrigin: "center center",
-                filter: frame >= 75 ? "blur(2px)" : "none",
+                filter: frame >= fadeOutStart ? "blur(2px)" : "none",
               }}
             />
           </div>

@@ -1,5 +1,9 @@
 import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
+import {
+  renderMedia,
+  selectComposition,
+  getVideoMetadata,
+} from "@remotion/renderer";
 import * as path from "path";
 import * as fs from "fs";
 import { RelatedContent } from "./types";
@@ -8,6 +12,11 @@ import {
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
   SCENE_1_DURATION,
+  SCENE_2_DURATION,
+  SCENE_3_DURATION,
+  SCENE_4_DURATION,
+  SCENE_5_DURATION,
+  SCENE_6_DURATION,
 } from "./constants";
 import { generateAllAudio } from "../services/audio-orchestrator";
 
@@ -82,10 +91,114 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
 
   console.log("✅ Composition selected");
 
-  // Override duration if hookOnly is true
+  // Calculate total duration based on audio files using getVideoMetadata
+  let totalDuration = composition.durationInFrames;
+
   if (hookOnly) {
-    composition.durationInFrames = SCENE_1_DURATION;
+    // For hook-only mode, calculate duration based on hook audio
+    if (audioFiles?.hook) {
+      try {
+        const metadata = await getVideoMetadata(
+          path.join(process.cwd(), "public", audioFiles.hook)
+        );
+        if (metadata.durationInSeconds !== null) {
+          const hookFrames = Math.ceil(metadata.durationInSeconds * VIDEO_FPS);
+          totalDuration = Math.max(SCENE_1_DURATION, hookFrames);
+        } else {
+          totalDuration = SCENE_1_DURATION;
+        }
+      } catch (error) {
+        console.warn("Could not get hook audio duration, using default");
+        totalDuration = SCENE_1_DURATION;
+      }
+    } else {
+      totalDuration = SCENE_1_DURATION;
+    }
+  } else if (audioFiles) {
+    // Calculate total duration for full video
+    let calculatedDuration = 0;
+
+    // Scene 1: Hook
+    if (audioFiles.hook) {
+      try {
+        const metadata = await getVideoMetadata(
+          path.join(process.cwd(), "public", audioFiles.hook)
+        );
+        if (metadata.durationInSeconds !== null) {
+          const hookFrames = Math.ceil(metadata.durationInSeconds * VIDEO_FPS);
+          calculatedDuration += Math.max(SCENE_1_DURATION, hookFrames);
+        } else {
+          calculatedDuration += SCENE_1_DURATION;
+        }
+      } catch (error) {
+        console.warn("Could not get hook audio duration, using default");
+        calculatedDuration += SCENE_1_DURATION;
+      }
+    } else {
+      calculatedDuration += SCENE_1_DURATION;
+    }
+
+    // Scenes 2-4: Categories
+    const defaultCategoryDurations = [
+      SCENE_2_DURATION,
+      SCENE_3_DURATION,
+      SCENE_4_DURATION,
+    ];
+    if (audioFiles.categories) {
+      for (let i = 0; i < Math.min(audioFiles.categories.length, 3); i++) {
+        try {
+          const metadata = await getVideoMetadata(
+            path.join(process.cwd(), "public", audioFiles.categories[i])
+          );
+          if (metadata.durationInSeconds !== null) {
+            const categoryFrames = Math.ceil(
+              metadata.durationInSeconds * VIDEO_FPS
+            );
+            calculatedDuration += Math.max(
+              defaultCategoryDurations[i],
+              categoryFrames
+            );
+          } else {
+            calculatedDuration += defaultCategoryDurations[i];
+          }
+        } catch (error) {
+          console.warn(
+            `Could not get category ${i} audio duration, using default`
+          );
+          calculatedDuration += defaultCategoryDurations[i];
+        }
+      }
+    }
+
+    // Scene 5: Overall
+    if (audioFiles.overall) {
+      try {
+        const metadata = await getVideoMetadata(
+          path.join(process.cwd(), "public", audioFiles.overall)
+        );
+        if (metadata.durationInSeconds !== null) {
+          const overallFrames = Math.ceil(
+            metadata.durationInSeconds * VIDEO_FPS
+          );
+          calculatedDuration += Math.max(SCENE_5_DURATION, overallFrames);
+        } else {
+          calculatedDuration += SCENE_5_DURATION;
+        }
+      } catch (error) {
+        console.warn("Could not get overall audio duration, using default");
+        calculatedDuration += SCENE_5_DURATION;
+      }
+    } else {
+      calculatedDuration += SCENE_5_DURATION;
+    }
+
+    // Scene 6: Closing
+    calculatedDuration += SCENE_6_DURATION;
+
+    totalDuration = calculatedDuration;
   }
+
+  composition.durationInFrames = totalDuration;
 
   console.log("🎥 Rendering video...");
   console.log(`   Output: ${outputPath}`);

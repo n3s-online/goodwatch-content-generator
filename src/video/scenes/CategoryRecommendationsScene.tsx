@@ -152,6 +152,7 @@ export const CategoryRecommendationsScene: React.FC<CategoryRecommendationsScene
   categoryName,
   movies,
   tvShows,
+  durationInFrames = 120,
 }) => {
   const frame = useCurrentFrame();
 
@@ -166,8 +167,9 @@ export const CategoryRecommendationsScene: React.FC<CategoryRecommendationsScene
     ...(tvShows.slice(0, 2) || []),
   ].slice(0, 4);
 
-  // Begin fade transition to next category at 3.5s (105 frames)
-  const fadeOutOpacity = interpolate(frame, [105, 120], [1, 0.7], {
+  // Begin fade transition 0.5s before end (15 frames before end)
+  const fadeOutStart = Math.max(0, durationInFrames - 15);
+  const fadeOutOpacity = interpolate(frame, [fadeOutStart, durationInFrames], [1, 0.7], {
     extrapolateRight: "clamp",
   });
 

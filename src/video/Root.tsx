@@ -1,12 +1,7 @@
 import React from "react";
 import { Composition } from "remotion";
 import { VideoComposition } from "./Composition";
-import {
-  VIDEO_WIDTH,
-  VIDEO_HEIGHT,
-  VIDEO_FPS,
-  TOTAL_DURATION,
-} from "./constants";
+import { VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS } from "./constants";
 import { VideoInputProps } from "./types";
 
 export const RemotionRoot: React.FC = () => {
@@ -21,12 +16,15 @@ export const RemotionRoot: React.FC = () => {
     audioFiles: undefined,
   };
 
+  // Use a large max duration - actual duration is calculated in renderer based on audio
+  const maxDuration = 60 * VIDEO_FPS; // 60 seconds max
+
   return (
     <>
       <Composition
         id="GoodwatchVideo"
         component={VideoComposition as any}
-        durationInFrames={TOTAL_DURATION}
+        durationInFrames={maxDuration}
         fps={VIDEO_FPS}
         width={VIDEO_WIDTH}
         height={VIDEO_HEIGHT}

@@ -209,6 +209,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
           data={data}
           sourceTitle={sourceTitle}
           sourceImage={sourceImage}
+          durationInFrames={sceneDurations.scene1}
         />
       </Sequence>
     );
@@ -228,6 +229,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
           data={data}
           sourceTitle={sourceTitle}
           sourceImage={sourceImage}
+          durationInFrames={sceneDurations.scene1}
         />
       </Sequence>
 
@@ -241,6 +243,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
             categoryName={selectedItems.categories[0].name}
             movies={selectedItems.categories[0].movies}
             tvShows={selectedItems.categories[0].tvShows}
+            durationInFrames={sceneDurations.scene2}
           />
         </Sequence>
       )}
@@ -255,6 +258,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
             categoryName={selectedItems.categories[1].name}
             movies={selectedItems.categories[1].movies}
             tvShows={selectedItems.categories[1].tvShows}
+            durationInFrames={sceneDurations.scene3}
           />
         </Sequence>
       )}
@@ -269,6 +273,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
             categoryName={selectedItems.categories[2].name}
             movies={selectedItems.categories[2].movies}
             tvShows={selectedItems.categories[2].tvShows}
+            durationInFrames={sceneDurations.scene4}
           />
         </Sequence>
       )}
@@ -279,6 +284,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
         <OverallScene
           movies={selectedItems.overall.movies}
           tvShows={selectedItems.overall.tvShows}
+          durationInFrames={sceneDurations.scene5}
         />
       </Sequence>
 

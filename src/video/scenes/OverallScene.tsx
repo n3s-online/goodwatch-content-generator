@@ -145,7 +145,7 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
   );
 };
 
-export const OverallScene: React.FC<OverallSceneProps> = ({ movies, tvShows }) => {
+export const OverallScene: React.FC<OverallSceneProps> = ({ movies, tvShows, durationInFrames = 120 }) => {
   const frame = useCurrentFrame();
 
   // Category label fades in (0.0s)

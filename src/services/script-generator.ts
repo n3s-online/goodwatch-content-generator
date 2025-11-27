@@ -1,142 +1,103 @@
-import { generateText } from "ai";
+import { generateObject, jsonSchema } from "ai";
 import { getEnvConfig, GEMINI_TEMPERATURE } from "../config/env";
-import { getScriptCachePath, loadScriptCache, saveScriptCache } from "./cache";
 
 const config = getEnvConfig();
 
-export async function generateHookScript(sourceTitle: string): Promise<string> {
-  // Check cache first
-  const cachePath = getScriptCachePath(sourceTitle, "hook");
-  const cached = loadScriptCache(cachePath);
-  if (cached) {
-    console.log("  ✓ Using cached hook script");
-    return cached.script;
-  }
-
-  const prompt = `Generate a short, engaging audio hook script (3-4 seconds when spoken) for a video recommendation about "${sourceTitle}".
-
-Use a similar style to these examples:
-- "Just finished ${sourceTitle} and need your next obsession? We've got you covered."
-- "You loved ${sourceTitle}. Now discover shows and movies that match that exact energy."
-- "Obsessed with ${sourceTitle}? We found your next binge. Here's what to watch."
-
-Generate ONE script in the same style, keeping it concise and engaging. Only return the script text, nothing else.`;
-
-  try {
-    // Set AI_GATEWAY_API_KEY for Vercel AI Gateway (as per restaurant-passport-content pattern)
-    process.env.AI_GATEWAY_API_KEY = config.VERCEL_AI_GATEWAY_API_KEY;
-
-    const result = await generateText({
-      model: "google/gemini-2.5-flash-lite" as any,
-      prompt,
-      temperature: GEMINI_TEMPERATURE,
-    });
-
-    const script = result.text.trim();
-
-    // Save to cache
-    saveScriptCache(cachePath, script, {
-      sourceTitle,
-      type: "hook",
-    });
-
-    return script;
-  } catch (error) {
-    throw new Error(
-      `Failed to generate hook script: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
+export interface VideoScript {
+  hook: string;
+  categories: Array<{
+    name: string;
+    script: string;
+  }>;
+  overall: string;
 }
 
-export async function generateCategoryScript(
-  categoryName: string
-): Promise<string> {
-  // Check cache first
-  const cachePath = getScriptCachePath(categoryName, "category");
-  const cached = loadScriptCache(cachePath);
-  if (cached) {
-    console.log(`  ✓ Using cached category script for ${categoryName}`);
-    return cached.script;
-  }
+const videoScriptSchema = jsonSchema<VideoScript>({
+  type: "object",
+  properties: {
+    hook: {
+      type: "string",
+      description: "Opening hook (3-4 seconds when spoken)",
+    },
+    categories: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Category name",
+          },
+          script: {
+            type: "string",
+            description: "Category intro script (3-4 seconds when spoken)",
+          },
+        },
+        required: ["name", "script"],
+      },
+    },
+    overall: {
+      type: "string",
+      description: "Overall recommendations intro (3-4 seconds when spoken)",
+    },
+  },
+  required: ["hook", "categories", "overall"],
+});
 
-  const prompt = `Generate a short, engaging audio script (3-4 seconds when spoken) for a video category section about "${categoryName}".
+export async function generateFullScript({
+  sourceTitle,
+  categories,
+}: {
+  sourceTitle: string;
+  categories: string[];
+}): Promise<VideoScript> {
+  const prompt = `Generate a complete, cohesive audio script for a video recommending content similar to "${sourceTitle}".
 
-Use a similar style to these examples:
-- "Mystery" -> "For that same mystery vibe, check out these picks."
-- "Intrigue" -> "Love the intrigue? These recs deliver that same energy."
-- "Dark" -> "Craving that dark mood? These will hit the spot."
+CRITICAL: Each script must be 7-12 words. Keep it concise and punchy.
 
-Generate ONE script in the same style for the "${categoryName}" category. Keep it concise and engaging. Only return the script text, nothing else.`;
+The script needs three parts:
+
+1. HOOK (7-12 words): An engaging opening
+Examples (all 7-12 words):
+- "Loved ${sourceTitle}? Your next obsession is here."
+- "Just finished ${sourceTitle}? We found your next binge."
+- "Into ${sourceTitle}? These picks deliver that same energy."
+
+2. CATEGORY INTROS (7-12 words each): For these ${
+    categories.length
+  } categories: ${categories.join(", ")}
+Each category needs a unique intro. AVOID repetition - use different phrases for each.
+Examples (all 7-12 words):
+- "Mystery" -> "Craving that same mystery vibe? Here you go."
+- "Intrigue" -> "Love the intrigue? These deliver big time."
+- "Dark" -> "Into that dark mood? These will hit hard."
+- "Tension" -> "Want more tension? Check out these picks."
+- "Sci-Fi" -> "For that sci-fi feel, these are perfect."
+
+3. OVERALL (7-12 words): Final intro for overall recommendations
+Examples (all 7-12 words):
+- "Here are our top picks for ${sourceTitle} fans."
+- "Our absolute best recommendations for you."
+
+IMPORTANT: 
+- Each script MUST be 7-12 words
+- Make each unique - vary the language
+- Keep it conversational and punchy`;
 
   try {
-    // Set AI_GATEWAY_API_KEY for Vercel AI Gateway (as per restaurant-passport-content pattern)
     process.env.AI_GATEWAY_API_KEY = config.VERCEL_AI_GATEWAY_API_KEY;
 
-    const result = await generateText({
+    const result = await generateObject({
       model: "google/gemini-2.5-flash-lite" as any,
+      schema: videoScriptSchema,
       prompt,
       temperature: GEMINI_TEMPERATURE,
     });
 
-    const script = result.text.trim();
-
-    // Save to cache
-    saveScriptCache(cachePath, script, {
-      categoryName,
-      type: "category",
-    });
-
-    return script;
+    return result.object;
   } catch (error) {
     throw new Error(
-      `Failed to generate category script: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-}
-
-export async function generateOverallScript(
-  sourceTitle: string
-): Promise<string> {
-  // Check cache first
-  const cachePath = getScriptCachePath(sourceTitle, "overall");
-  const cached = loadScriptCache(cachePath);
-  if (cached) {
-    console.log("  ✓ Using cached overall script");
-    return cached.script;
-  }
-
-  const prompt = `Generate a short, engaging audio script (3-4 seconds when spoken) for an overall recommendations section.
-
-Use this template: "These are our top picks for ${sourceTitle}"
-
-Generate ONE script in a similar style. Keep it concise and engaging. Only return the script text, nothing else.`;
-
-  try {
-    // Set AI_GATEWAY_API_KEY for Vercel AI Gateway (as per restaurant-passport-content pattern)
-    process.env.AI_GATEWAY_API_KEY = config.VERCEL_AI_GATEWAY_API_KEY;
-
-    const result = await generateText({
-      model: "google/gemini-2.5-flash-lite" as any,
-      prompt,
-      temperature: GEMINI_TEMPERATURE,
-    });
-
-    const script = result.text.trim();
-
-    // Save to cache
-    saveScriptCache(cachePath, script, {
-      sourceTitle,
-      type: "overall",
-    });
-
-    return script;
-  } catch (error) {
-    throw new Error(
-      `Failed to generate overall script: ${
+      `Failed to generate script: ${
         error instanceof Error ? error.message : String(error)
       }`
     );

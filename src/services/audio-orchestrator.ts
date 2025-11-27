@@ -1,10 +1,6 @@
 import * as path from "path";
 import * as fs from "fs";
-import {
-  generateHookScript,
-  generateCategoryScript,
-  generateOverallScript,
-} from "./script-generator";
+import { generateFullScript, VideoScript } from "./script-generator";
 import { generateAudio } from "./audio-generator";
 
 export interface AudioFiles {
@@ -33,37 +29,48 @@ export async function generateAllAudio({
   };
 
   try {
-    // Generate hook script and audio
-    console.log("🎤 Generating hook audio...");
-    const hookScript = await generateHookScript(sourceTitle);
-    const hookAudioPath = path.join(publicDir, "hook.mp3");
-    await generateAudio({ script: hookScript, outputPath: hookAudioPath });
-    audioFiles.hook = "audio/hook.mp3"; // Relative path for staticFile
-    console.log("✅ Hook audio generated");
+    // Load or generate script
+    const scriptPath = path.join(outputDir, "script.json");
+    let script: VideoScript;
 
-    // Generate category scripts and audio
-    for (let i = 0; i < categories.length; i++) {
-      const category = categories[i];
-      console.log(`🎤 Generating audio for category: ${category}...`);
-      const categoryScript = await generateCategoryScript(category);
-      const categoryAudioPath = path.join(publicDir, `category-${i}.mp3`);
-      await generateAudio({
-        script: categoryScript,
-        outputPath: categoryAudioPath,
-      });
-      audioFiles.categories.push(`audio/category-${i}.mp3`); // Relative path for staticFile
-      console.log(`✅ Category audio generated: ${category}`);
+    if (fs.existsSync(scriptPath)) {
+      console.log("📝 Loading existing script...");
+      script = JSON.parse(fs.readFileSync(scriptPath, "utf-8"));
+    } else {
+      console.log("🤖 Generating new script...");
+      script = await generateFullScript({ sourceTitle, categories });
+      fs.writeFileSync(scriptPath, JSON.stringify(script, null, 2), "utf-8");
+      console.log(`✅ Script saved to ${path.basename(outputDir)}/script.json`);
     }
 
-    // Generate overall script and audio
+    // Generate hook audio
+    console.log("🎤 Generating hook audio...");
+    const hookAudioPath = path.join(publicDir, "hook.mp3");
+    await generateAudio({ script: script.hook, outputPath: hookAudioPath });
+    audioFiles.hook = "audio/hook.mp3";
+    console.log("✅ Hook audio generated");
+
+    // Generate category audio
+    for (let i = 0; i < script.categories.length; i++) {
+      const category = script.categories[i];
+      console.log(`🎤 Generating audio for category: ${category.name}...`);
+      const categoryAudioPath = path.join(publicDir, `category-${i}.mp3`);
+      await generateAudio({
+        script: category.script,
+        outputPath: categoryAudioPath,
+      });
+      audioFiles.categories.push(`audio/category-${i}.mp3`);
+      console.log(`✅ Category audio generated: ${category.name}`);
+    }
+
+    // Generate overall audio
     console.log("🎤 Generating overall audio...");
-    const overallScript = await generateOverallScript(sourceTitle);
     const overallAudioPath = path.join(publicDir, "overall.mp3");
     await generateAudio({
-      script: overallScript,
+      script: script.overall,
       outputPath: overallAudioPath,
     });
-    audioFiles.overall = "audio/overall.mp3"; // Relative path for staticFile
+    audioFiles.overall = "audio/overall.mp3";
     console.log("✅ Overall audio generated");
 
     return audioFiles;

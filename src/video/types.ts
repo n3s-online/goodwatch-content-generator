@@ -39,17 +39,20 @@ export interface SceneProps {
   data: RelatedContent;
   sourceTitle: string;
   sourceImage: string;
+  durationInFrames?: number;
 }
 
 export interface OverallSceneProps {
   movies: MediaItem[];
   tvShows: MediaItem[];
+  durationInFrames?: number;
 }
 
 export interface CategoryRecommendationsSceneProps {
   categoryName: string;
   movies: MediaItem[];
   tvShows: MediaItem[];
+  durationInFrames?: number;
 }
 
 export interface ClosingSceneProps {
