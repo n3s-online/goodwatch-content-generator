@@ -116,6 +116,34 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({ allItems }) => {
                   boxShadow: "0 4px 8px rgba(0, 0, 0, 0.6)",
                 }}
               />
+              {/* Score Badge */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 5,
+                  right: 5,
+                  width: 35,
+                  height: 35,
+                  backgroundColor: COLORS.accent,
+                  borderRadius: "50%",
+                  border: "1px solid white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 0 8px rgba(92, 184, 92, 0.3)",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    fontFamily: "Helvetica Neue, Arial, sans-serif",
+                    color: COLORS.text,
+                  }}
+                >
+                  {item.goodwatch_score}
+                </span>
+              </div>
             </div>
           );
         })}

@@ -88,14 +88,14 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
           }}
         />
 
-        {/* Score Badge - Circular, 50px diameter, top-right */}
+        {/* Score Badge - Circular, 80px diameter (60% larger), top-right */}
         <div
           style={{
             position: "absolute",
             top: 10,
             right: 10,
-            width: 50,
-            height: 50,
+            width: 80,
+            height: 80,
             backgroundColor: COLORS.accent,
             borderRadius: "50%",
             border: "2px solid white",
@@ -107,7 +107,9 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
         >
           <span
             style={{
-              ...FONTS.score,
+              fontSize: 32,
+              fontWeight: "bold",
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
               color: COLORS.text,
             }}
           >
