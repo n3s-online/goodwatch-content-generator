@@ -19,6 +19,11 @@ export interface VideoInputProps {
   sourceTitle: string;
   sourceImage: string;
   hookOnly?: boolean;
+  audioFiles?: {
+    hook?: string;
+    categories?: string[];
+    overall?: string;
+  };
 }
 
 export interface SceneProps {

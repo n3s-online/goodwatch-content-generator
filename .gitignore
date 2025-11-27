@@ -47,5 +47,12 @@ temp/
 *.tmp
 *.temp
 
+# Cache files
+cache/
+
+# Generated audio files
+public/audio/
+public/background-music.mp3
+
 # pnpm
 .pnpm-debug.log

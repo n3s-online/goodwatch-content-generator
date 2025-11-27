@@ -18,6 +18,7 @@ export const RemotionRoot: React.FC = () => {
     sourceTitle: "Loading...",
     sourceImage: "",
     hookOnly: false,
+    audioFiles: undefined,
   };
 
   return (

@@ -1,5 +1,12 @@
-import React from "react";
-import { Sequence } from "remotion";
+import React, { useEffect, useState } from "react";
+import {
+  Audio,
+  Sequence,
+  staticFile,
+  continueRender,
+  delayRender,
+} from "remotion";
+import { getAudioDurationInSeconds } from "@remotion/media-utils";
 import {
   SCENE_1_DURATION,
   SCENE_2_DURATION,
@@ -7,6 +14,7 @@ import {
   SCENE_4_DURATION,
   SCENE_5_DURATION,
   SCENE_6_DURATION,
+  VIDEO_FPS,
 } from "./constants";
 import { HookScene } from "./scenes/HookScene";
 import { OverallScene } from "./scenes/OverallScene";
@@ -20,7 +28,84 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
   sourceTitle,
   sourceImage,
   hookOnly = false,
+  audioFiles,
 }) => {
+  // State for dynamic scene durations based on audio length
+  const [sceneDurations, setSceneDurations] = useState({
+    scene1: SCENE_1_DURATION,
+    scene2: SCENE_2_DURATION,
+    scene3: SCENE_3_DURATION,
+    scene4: SCENE_4_DURATION,
+    scene5: SCENE_5_DURATION,
+  });
+  const [durationsLoaded, setDurationsLoaded] = useState(false);
+
+  // Calculate durations based on audio files
+  useEffect(() => {
+    if (!audioFiles) {
+      setDurationsLoaded(true);
+      return;
+    }
+
+    const handle = delayRender();
+
+    const loadDurations = async () => {
+      try {
+        const durations = { ...sceneDurations };
+
+        // Get hook audio duration
+        if (audioFiles.hook) {
+          const hookDuration = await getAudioDurationInSeconds(
+            staticFile(audioFiles.hook)
+          );
+          durations.scene1 = Math.max(
+            SCENE_1_DURATION,
+            Math.ceil(hookDuration * VIDEO_FPS)
+          );
+        }
+
+        // Get category audio durations
+        if (audioFiles.categories) {
+          for (let i = 0; i < Math.min(audioFiles.categories.length, 3); i++) {
+            const audioDuration = await getAudioDurationInSeconds(
+              staticFile(audioFiles.categories[i])
+            );
+            const sceneKey = `scene${i + 2}` as keyof typeof durations;
+            const defaultDuration = [
+              SCENE_2_DURATION,
+              SCENE_3_DURATION,
+              SCENE_4_DURATION,
+            ][i];
+            durations[sceneKey] = Math.max(
+              defaultDuration,
+              Math.ceil(audioDuration * VIDEO_FPS)
+            );
+          }
+        }
+
+        // Get overall audio duration
+        if (audioFiles.overall) {
+          const overallDuration = await getAudioDurationInSeconds(
+            staticFile(audioFiles.overall)
+          );
+          durations.scene5 = Math.max(
+            SCENE_5_DURATION,
+            Math.ceil(overallDuration * VIDEO_FPS)
+          );
+        }
+
+        setSceneDurations(durations);
+        setDurationsLoaded(true);
+        continueRender(handle);
+      } catch (error) {
+        console.error("Error loading audio durations:", error);
+        setDurationsLoaded(true);
+        continueRender(handle);
+      }
+    };
+
+    loadDurations();
+  }, [audioFiles]);
   // Get all available categories (excluding "Overall")
   const movieCategories = Object.keys(data.movies).filter(
     (cat) => cat !== "Overall"
@@ -81,30 +166,33 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
     ]),
   ];
 
-  // Calculate frame offsets
+  // Calculate frame offsets using dynamic durations
   // New order: Hook -> Category 1 -> Category 2 -> Category 3 -> Overall -> Closing
   let currentFrame = 0;
   const scene1Start = currentFrame;
-  currentFrame += SCENE_1_DURATION;
+  currentFrame += sceneDurations.scene1;
 
   const scene2Start = currentFrame;
-  currentFrame += SCENE_2_DURATION; // Category 1 - 4s
+  currentFrame += sceneDurations.scene2; // Category 1
 
   const scene3Start = currentFrame;
-  currentFrame += SCENE_3_DURATION; // Category 2 - 4s
+  currentFrame += sceneDurations.scene3; // Category 2
 
   const scene4Start = currentFrame;
-  currentFrame += SCENE_4_DURATION; // Category 3 - 4s
+  currentFrame += sceneDurations.scene4; // Category 3
 
   const scene5Start = currentFrame;
-  currentFrame += SCENE_5_DURATION; // Overall - 4s
+  currentFrame += sceneDurations.scene5; // Overall
 
   const scene6Start = currentFrame;
 
   // If hookOnly is true, only render the hook scene
   if (hookOnly) {
+    if (!durationsLoaded) return null;
+
     return (
-      <Sequence from={0} durationInFrames={SCENE_1_DURATION}>
+      <Sequence from={0} durationInFrames={sceneDurations.scene1}>
+        {audioFiles?.hook && <Audio src={staticFile(audioFiles.hook)} />}
         <HookScene
           data={data}
           sourceTitle={sourceTitle}
@@ -114,10 +202,16 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
     );
   }
 
+  if (!durationsLoaded) return null;
+
   return (
     <>
+      {/* Background Music - plays for entire video at 30% volume */}
+      <Audio src={staticFile("background-music.mp3")} volume={0.3} loop />
+
       {/* Scene 1: Hook */}
-      <Sequence from={scene1Start} durationInFrames={SCENE_1_DURATION}>
+      <Sequence from={scene1Start} durationInFrames={sceneDurations.scene1}>
+        {audioFiles?.hook && <Audio src={staticFile(audioFiles.hook)} />}
         <HookScene
           data={data}
           sourceTitle={sourceTitle}
@@ -127,7 +221,10 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
 
       {/* Scene 2: Category 1 */}
       {selectedItems.categories[0] && (
-        <Sequence from={scene2Start} durationInFrames={SCENE_2_DURATION}>
+        <Sequence from={scene2Start} durationInFrames={sceneDurations.scene2}>
+          {audioFiles?.categories?.[0] && (
+            <Audio src={staticFile(audioFiles.categories[0])} />
+          )}
           <CategoryRecommendationsScene
             categoryName={selectedItems.categories[0].name}
             movies={selectedItems.categories[0].movies}
@@ -138,7 +235,10 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
 
       {/* Scene 3: Category 2 */}
       {selectedItems.categories[1] && (
-        <Sequence from={scene3Start} durationInFrames={SCENE_3_DURATION}>
+        <Sequence from={scene3Start} durationInFrames={sceneDurations.scene3}>
+          {audioFiles?.categories?.[1] && (
+            <Audio src={staticFile(audioFiles.categories[1])} />
+          )}
           <CategoryRecommendationsScene
             categoryName={selectedItems.categories[1].name}
             movies={selectedItems.categories[1].movies}
@@ -149,7 +249,10 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
 
       {/* Scene 4: Category 3 */}
       {selectedItems.categories[2] && (
-        <Sequence from={scene4Start} durationInFrames={SCENE_4_DURATION}>
+        <Sequence from={scene4Start} durationInFrames={sceneDurations.scene4}>
+          {audioFiles?.categories?.[2] && (
+            <Audio src={staticFile(audioFiles.categories[2])} />
+          )}
           <CategoryRecommendationsScene
             categoryName={selectedItems.categories[2].name}
             movies={selectedItems.categories[2].movies}
@@ -159,7 +262,8 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
       )}
 
       {/* Scene 5: Overall Top Picks */}
-      <Sequence from={scene5Start} durationInFrames={SCENE_5_DURATION}>
+      <Sequence from={scene5Start} durationInFrames={sceneDurations.scene5}>
+        {audioFiles?.overall && <Audio src={staticFile(audioFiles.overall)} />}
         <OverallScene
           movies={selectedItems.overall.movies}
           tvShows={selectedItems.overall.tvShows}

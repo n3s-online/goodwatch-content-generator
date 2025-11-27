@@ -1,8 +1,10 @@
+import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
 import inquirer from "inquirer";
 import { renderVideo } from "./video/renderer";
 import { RelatedContent } from "./video/types";
+import { getEnvConfig } from "./config/env";
 
 /**
  * Get all .output.json files in the output directory
@@ -92,9 +94,28 @@ function extractSourceInfo(
 /**
  * Main function to create a video
  */
-export async function createVideo({ hookOnly = false }: { hookOnly?: boolean } = {}): Promise<void> {
+export async function createVideo({
+  hookOnly = false,
+}: { hookOnly?: boolean } = {}): Promise<void> {
   try {
     console.log("\n🎬 Goodwatch Video Creator\n");
+
+    // Validate environment variables
+    try {
+      getEnvConfig();
+      console.log("✅ Environment variables validated");
+    } catch (error) {
+      console.error("\n❌ Environment validation failed:");
+      console.error(error instanceof Error ? error.message : error);
+      console.error("\nPlease set the required environment variables:");
+      console.error("  - ELEVENLABS_API_KEY (required)");
+      console.error("  - VERCEL_AI_GATEWAY_API_KEY (required)");
+      console.error(
+        "  - VERCEL_AI_GATEWAY_URL (optional, defaults to https://ai-gateway.vercel.sh/v1)"
+      );
+      console.error("  - ELEVENLABS_VOICE_ID (optional)");
+      process.exit(1);
+    }
 
     // Select output file
     const selectedFile = await selectOutputFile();
