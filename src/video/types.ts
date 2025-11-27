@@ -1,3 +1,12 @@
+// Re-export API types for convenience
+export type {
+  APIResponse,
+  APIMediaItem,
+  APICategoryData,
+  MediaType,
+  ShowData,
+} from "../api-client";
+
 export interface MediaItem {
   name: string;
   link: string;

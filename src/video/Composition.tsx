@@ -106,12 +106,12 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
 
     loadDurations();
   }, [audioFiles]);
-  // Get all available categories (excluding "Overall")
+  // Get all available categories (excluding "overall")
   const movieCategories = Object.keys(data.movies).filter(
-    (cat) => cat !== "Overall"
+    (cat) => cat.toLowerCase() !== "overall"
   );
   const tvShowCategories = Object.keys(data.tv_shows).filter(
-    (cat) => cat !== "Overall"
+    (cat) => cat.toLowerCase() !== "overall"
   );
 
   // Use the first common category, or fall back to any available categories
@@ -143,7 +143,11 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
   };
 
   // Prepare category data for deduplication
-  const overallItems = getItemsForCategory("Overall");
+  // Find the overall category (case-insensitive)
+  const overallCategoryKey =
+    Object.keys(data.movies).find((cat) => cat.toLowerCase() === "overall") ||
+    "overall";
+  const overallItems = getItemsForCategory(overallCategoryKey);
   const categoryData = selectedCategories.map((categoryName) => ({
     name: categoryName,
     ...getItemsForCategory(categoryName),

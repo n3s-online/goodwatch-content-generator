@@ -5,18 +5,16 @@ import { Command } from "commander";
 import * as fs from "fs";
 import * as path from "path";
 import inquirer from "inquirer";
-import { parseRelatedContent } from "./parser";
-import { fetchHTML } from "./fetcher";
+import { parseAPIResponse } from "./parser";
+import {
+  fetchFromAPI,
+  extractIdFromInput,
+  extractSlugFromLink,
+  MediaType,
+  ShowData,
+} from "./api-client";
 import { createVideo } from "./video-cli";
-
-/**
- * Extract the ID and slug from a Goodwatch URL
- * e.g., "https://goodwatch.app/movie/1412450-stranger-things" -> "1412450-stranger-things"
- */
-function extractIdSlugFromUrl(url: string): string | null {
-  const match = url.match(/\/(movie|show)\/([^/?#]+)/);
-  return match ? match[2] : null;
-}
+import { scrapeShowMetadata } from "./show-scraper";
 
 const program = new Command();
 
@@ -29,127 +27,114 @@ program
 
 program
   .command("scrape")
-  .description("Scrape related content from a Goodwatch URL")
-  .option(
-    "-f, --file <path>",
-    "Parse from local HTML file instead of fetching URL"
-  )
-  .option(
-    "-b, --browser",
-    "Force use of headless browser (slower but handles JavaScript-rendered pages)"
-  )
-  .action(async (options: { file?: string; browser?: boolean }) => {
+  .description("Fetch related content from Goodwatch API")
+  .action(async () => {
     try {
-      console.log("\n🔍 Goodwatch Content Scraper\n");
+      console.log("\n🔍 Goodwatch API Fetcher\n");
 
-      let url = "";
-      let html: string;
+      // Prompt for media type
+      const mediaTypeAnswer = await inquirer.prompt([
+        {
+          type: "list",
+          name: "mediaType",
+          message: "Select media type:",
+          choices: [
+            { name: "TV Show", value: "show" },
+            { name: "Movie", value: "movie" },
+          ],
+        },
+      ]);
+      const mediaType = mediaTypeAnswer.mediaType as MediaType;
 
-      if (options.file) {
-        // Parse from local file
-        if (!fs.existsSync(options.file)) {
-          console.error(`Error: File not found: ${options.file}`);
-          process.exit(1);
-        }
-        html = fs.readFileSync(options.file, "utf-8");
-        // For file mode, we still need a URL for naming
-        const answer = await inquirer.prompt([
-          {
-            type: "input",
-            name: "url",
-            message: "Enter the Goodwatch URL (for naming the output file):",
-            validate: (input: string) => {
-              if (!input.trim()) {
-                return "URL is required";
-              }
-              if (!input.includes("goodwatch.app")) {
-                return "Please enter a valid Goodwatch URL";
-              }
+      // Prompt for ID or URL
+      const inputAnswer = await inquirer.prompt([
+        {
+          type: "input",
+          name: "input",
+          message: `Enter Goodwatch ${
+            mediaType === "show" ? "show" : "movie"
+          } ID or URL:`,
+          validate: (input: string) => {
+            if (!input.trim()) {
+              return "Input is required";
+            }
+            try {
+              extractIdFromInput(input);
               return true;
-            },
+            } catch (error) {
+              return error instanceof Error ? error.message : "Invalid input";
+            }
           },
-        ]);
-        url = answer.url;
-      } else {
-        // Interactive URL input
-        const answer = await inquirer.prompt([
-          {
-            type: "input",
-            name: "url",
-            message: "Enter the Goodwatch URL to scrape:",
-            validate: (input: string) => {
-              if (!input.trim()) {
-                return "URL is required";
-              }
-              if (
-                !input.startsWith("http://") &&
-                !input.startsWith("https://")
-              ) {
-                return "URL must start with http:// or https://";
-              }
-              if (!input.includes("goodwatch.app")) {
-                return "Please enter a valid Goodwatch URL";
-              }
-              return true;
-            },
-          },
-        ]);
-        url = answer.url;
+        },
+      ]);
 
-        try {
-          console.log("\n⏳ Fetching content...\n");
-          html = await fetchHTML(url, {
-            useHeadless: options.browser,
-            timeout: 30000,
-          });
-        } catch (error) {
-          console.error(
-            `Error: ${error instanceof Error ? error.message : error}`
-          );
-          console.error(
-            "\nTip: Try using the --browser flag to use a headless browser, or save the HTML with your browser and use the --file option."
-          );
-          process.exit(1);
-        }
-      }
+      const { id, mediaType: detectedType } = extractIdFromInput(
+        inputAnswer.input
+      );
 
-      console.log("📝 Parsing content...\n");
-      const result = parseRelatedContent(html);
+      // If media type was detected from URL, use it; otherwise use the selected one
+      const finalMediaType = detectedType || mediaType;
 
-      // Check if results are completely empty
+      console.log(`\n⏳ Fetching related content from API...\n`);
+
+      // Fetch related content from API
+      const relatedContent = await fetchFromAPI({
+        mediaType: finalMediaType,
+        id,
+      });
+
+      // Construct show URL for scraping metadata
+      const showUrl = `https://goodwatch.app/${finalMediaType}/${id}`;
+
+      console.log(`\n🔍 Scraping show metadata from ${showUrl}...\n`);
+
+      // Scrape main show metadata
+      const metadata = await scrapeShowMetadata(showUrl);
+
+      // Transform to internal format
+      const result = parseAPIResponse(relatedContent);
+
+      // Check if results are empty
       const hasMovies = Object.keys(result.movies).length > 0;
       const hasShows = Object.keys(result.tv_shows).length > 0;
 
       if (!hasMovies && !hasShows) {
-        console.error("\n⚠️  WARNING: Results are completely empty!");
-        console.error("This could mean:");
-        console.error('  1. The URL does not have a "Related" section');
-        console.error("  2. The page structure has changed");
+        console.error("\n⚠️  WARNING: No related content found!");
         console.error(
-          "  3. The website is blocking or returning different content"
+          `The API returned no recommendations for ${finalMediaType} ID: ${id}`
         );
-        console.error(
-          "  4. The URL is incorrect (e.g., using /movie/ instead of /show/)"
-        );
-        console.error(
-          "\nTip: Try saving the HTML with your browser and using the --file option to parse it locally."
-        );
+        process.exit(1);
       }
 
-      // Create output directory if it doesn't exist
-      const outputDir = path.join(process.cwd(), "output");
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+      // Create slug from title
+      const slug = metadata.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      const idSlug = `${id}-${slug}`;
+
+      // Combine metadata and related content
+      const showData: ShowData = {
+        metadata: {
+          title: metadata.title,
+          year: metadata.year,
+          posterUrl: metadata.posterUrl,
+        },
+        relatedContent,
+      };
+
+      // Create show-specific directory
+      const showDir = path.join(process.cwd(), "output", idSlug);
+      if (!fs.existsSync(showDir)) {
+        fs.mkdirSync(showDir, { recursive: true });
       }
 
-      // Save output to file in output/ directory
-      const idSlug = extractIdSlugFromUrl(url);
-      if (idSlug) {
-        const outputFileName = `${idSlug}.output.json`;
-        const outputPath = path.join(outputDir, outputFileName);
-        fs.writeFileSync(outputPath, JSON.stringify(result, null, 2), "utf-8");
-        console.log(`✅ Output saved to: output/${outputFileName}\n`);
-      }
+      // Save combined data
+      const outputFileName = `${idSlug}.json`;
+      const outputPath = path.join(showDir, outputFileName);
+      fs.writeFileSync(outputPath, JSON.stringify(showData, null, 2), "utf-8");
+      console.log(`✅ Data saved to: output/${idSlug}/${outputFileName}\n`);
 
       // Print summary
       const movieCount = Object.values(result.movies).reduce(
@@ -161,8 +146,10 @@ program
         0
       );
       console.log(`📊 Summary:`);
-      console.log(`   Movies: ${movieCount}`);
-      console.log(`   TV Shows: ${showCount}`);
+      console.log(`   Title: ${metadata.title}`);
+      console.log(`   Year: ${metadata.year || "N/A"}`);
+      console.log(`   Related Movies: ${movieCount}`);
+      console.log(`   Related TV Shows: ${showCount}`);
       console.log(`   Categories: ${Object.keys(result.movies).length}\n`);
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);

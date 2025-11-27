@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import { COLORS, FONTS, VIDEO_WIDTH, VIDEO_HEIGHT } from "../constants";
 import { CategoryRecommendationsSceneProps, MediaItem } from "../types";
+import { formatCategoryLabel } from "../utils/formatCategory";
 
 interface GridItemProps {
   item: MediaItem;
@@ -197,7 +198,7 @@ export const CategoryRecommendationsScene: React.FC<CategoryRecommendationsScene
             letterSpacing: "2px",
           }}
         >
-          {categoryName}
+          {formatCategoryLabel(categoryName)}
         </span>
       </div>
 

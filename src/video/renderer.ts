@@ -31,12 +31,12 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
     hookOnly = false,
   } = options;
 
-  // Extract categories for audio generation
+  // Extract categories for audio generation (excluding "overall")
   const movieCategories = Object.keys(data.movies).filter(
-    (cat) => cat !== "Overall"
+    (cat) => cat.toLowerCase() !== "overall"
   );
   const tvShowCategories = Object.keys(data.tv_shows).filter(
-    (cat) => cat !== "Overall"
+    (cat) => cat.toLowerCase() !== "overall"
   );
   const availableCategories = movieCategories.filter((cat) =>
     tvShowCategories.includes(cat)

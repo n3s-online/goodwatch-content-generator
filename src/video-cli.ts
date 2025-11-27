@@ -3,91 +3,70 @@ import * as fs from "fs";
 import * as path from "path";
 import inquirer from "inquirer";
 import { renderVideo } from "./video/renderer";
-import { RelatedContent } from "./video/types";
+import { RelatedContent, MediaType, ShowData } from "./video/types";
 import { getEnvConfig } from "./config/env";
+import {
+  fetchFromAPI,
+  extractIdFromInput,
+  extractSlugFromLink,
+} from "./api-client";
+import { parseAPIResponse } from "./parser";
+import { scrapeShowMetadata } from "./show-scraper";
 
 /**
- * Get all .output.json files in the output directory
+ * Get all show directories in the output directory
+ * Returns array of directory names (e.g., ["66732-stranger-things", "157336-away"])
  */
-function getOutputFiles(): string[] {
+function getIngestedShows(): string[] {
   const outputDir = path.join(process.cwd(), "output");
 
   if (!fs.existsSync(outputDir)) {
     return [];
   }
 
-  const files = fs.readdirSync(outputDir);
-  return files.filter((file) => file.endsWith(".output.json"));
+  const entries = fs.readdirSync(outputDir, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
 }
 
 /**
- * Interactive file selection using inquirer
+ * Interactive show selection using inquirer
  */
-async function selectOutputFile(): Promise<string> {
-  const files = getOutputFiles();
+async function selectIngestedShow(): Promise<string> {
+  const shows = getIngestedShows();
 
-  if (files.length === 0) {
-    throw new Error(
-      "No .output.json files found in the output/ directory. Please run 'pnpm scrape' first."
-    );
+  if (shows.length === 0) {
+    return "";
   }
 
   const answer = await inquirer.prompt([
     {
       type: "list",
-      name: "file",
-      message: "Select an output file to create a video from:",
-      choices: files,
+      name: "show",
+      message: "Select a show to create a video from:",
+      choices: shows.map((showDir) => ({
+        name: showDir.replace(/^\d+-/, "").replace(/-/g, " "),
+        value: showDir,
+      })),
       pageSize: 10,
     },
   ]);
 
-  return answer.file;
+  return answer.show;
 }
 
 /**
- * Extract source information from the filename
- * The filename format is: [id]-[slug].output.json
- * Example: 1412450-stranger-things.output.json -> "Stranger Things"
+ * Extract source information from show data
  */
-function extractSourceInfo(
-  data: RelatedContent,
-  filename: string
-): { title: string; image: string } {
-  // Extract title from filename
-  const titleFromFilename = filename
-    .replace(".output.json", "")
-    .replace(/^\d+-/, "") // Remove leading ID and dash
-    .replace(/-/g, " ")
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
-  // For the image, we'll use a well-known poster URL for Stranger Things
-  // In a production scenario, you would fetch this from the Goodwatch API
-  // or store it when parsing the original page
-  let sourceImage = "";
-
-  // Hardcoded image for Stranger Things as an example
-  // TODO: Fetch this from the Goodwatch API or store during parsing
-  if (filename.includes("stranger-things")) {
-    sourceImage =
-      "https://www.themoviedb.org/t/p/w300_and_h450_bestv2/49WJfeN0moxb9IPfGn8AIqMGskD.jpg";
-  } else {
-    // Fallback: try to find an image from the data (use first available)
-    const overallTvShows = data.tv_shows["Overall"];
-    const overallMovies = data.movies["Overall"];
-
-    if (overallTvShows && overallTvShows.length > 0) {
-      sourceImage = overallTvShows[0].image;
-    } else if (overallMovies && overallMovies.length > 0) {
-      sourceImage = overallMovies[0].image;
-    }
-  }
-
+function extractSourceInfo(showData: ShowData): {
+  title: string;
+  image: string;
+} {
   return {
-    title: titleFromFilename,
-    image: sourceImage,
+    title: showData.metadata.title,
+    image: showData.metadata.posterUrl,
   };
 }
 
@@ -103,7 +82,7 @@ export async function createVideo({
     // Validate environment variables
     try {
       getEnvConfig();
-      console.log("✅ Environment variables validated");
+      console.log("✅ Environment variables validated\n");
     } catch (error) {
       console.error("\n❌ Environment validation failed:");
       console.error(error instanceof Error ? error.message : error);
@@ -117,16 +96,142 @@ export async function createVideo({
       process.exit(1);
     }
 
-    // Select output file
-    const selectedFile = await selectOutputFile();
+    const ingestedShows = getIngestedShows();
+    let selectedShow = "";
+    let showData: ShowData;
 
-    // Read the data from output directory
-    const filePath = path.join(process.cwd(), "output", selectedFile);
-    const fileContent = fs.readFileSync(filePath, "utf-8");
-    const data: RelatedContent = JSON.parse(fileContent);
+    // Prompt: use existing or fetch new
+    if (ingestedShows.length > 0) {
+      const sourceChoice = await inquirer.prompt([
+        {
+          type: "list",
+          name: "choice",
+          message: "Create video from:",
+          choices: [
+            { name: "Existing show", value: "existing" },
+            { name: "New show (fetch from API)", value: "new" },
+          ],
+        },
+      ]);
 
-    // Extract source info
-    const { title, image } = extractSourceInfo(data, selectedFile);
+      if (sourceChoice.choice === "existing") {
+        selectedShow = await selectIngestedShow();
+      }
+    }
+
+    // If no show selected (either no existing shows or chose "new"), fetch from API
+    if (!selectedShow) {
+      console.log("\n📡 Fetch from Goodwatch API\n");
+
+      // Prompt for media type
+      const mediaTypeAnswer = await inquirer.prompt([
+        {
+          type: "list",
+          name: "mediaType",
+          message: "Select media type:",
+          choices: [
+            { name: "TV Show", value: "show" },
+            { name: "Movie", value: "movie" },
+          ],
+        },
+      ]);
+      const mediaType = mediaTypeAnswer.mediaType as MediaType;
+
+      // Prompt for ID or URL
+      const inputAnswer = await inquirer.prompt([
+        {
+          type: "input",
+          name: "input",
+          message: `Enter Goodwatch ${
+            mediaType === "show" ? "show" : "movie"
+          } ID or URL:`,
+          validate: (input: string) => {
+            if (!input.trim()) {
+              return "Input is required";
+            }
+            try {
+              extractIdFromInput(input);
+              return true;
+            } catch (error) {
+              return error instanceof Error ? error.message : "Invalid input";
+            }
+          },
+        },
+      ]);
+
+      const { id, mediaType: detectedType } = extractIdFromInput(
+        inputAnswer.input
+      );
+      const finalMediaType = detectedType || mediaType;
+
+      console.log(`\n⏳ Fetching related content from API...\n`);
+
+      // Fetch related content from API
+      const relatedContent = await fetchFromAPI({
+        mediaType: finalMediaType,
+        id,
+      });
+
+      // Construct show URL for scraping metadata
+      const showUrl = `https://goodwatch.app/${finalMediaType}/${id}`;
+
+      console.log(`\n🔍 Scraping show metadata from ${showUrl}...\n`);
+
+      // Scrape main show metadata
+      const metadata = await scrapeShowMetadata(showUrl);
+
+      // Create slug from title
+      const slug = metadata.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      selectedShow = `${id}-${slug}`;
+
+      // Combine metadata and related content
+      showData = {
+        metadata: {
+          title: metadata.title,
+          year: metadata.year,
+          posterUrl: metadata.posterUrl,
+        },
+        relatedContent,
+      };
+
+      // Create show-specific directory
+      const showDir = path.join(process.cwd(), "output", selectedShow);
+      if (!fs.existsSync(showDir)) {
+        fs.mkdirSync(showDir, { recursive: true });
+      }
+
+      // Save the combined data
+      const dataFileName = `${selectedShow}.json`;
+      const dataFilePath = path.join(showDir, dataFileName);
+      fs.writeFileSync(
+        dataFilePath,
+        JSON.stringify(showData, null, 2),
+        "utf-8"
+      );
+      console.log(`✅ Data saved to: output/${selectedShow}/${dataFileName}\n`);
+    } else {
+      // Load existing show data
+      const showDir = path.join(process.cwd(), "output", selectedShow);
+      const dataFilePath = path.join(showDir, `${selectedShow}.json`);
+
+      if (!fs.existsSync(dataFilePath)) {
+        throw new Error(
+          `Data file not found: ${selectedShow}/${selectedShow}.json. It may have been deleted.`
+        );
+      }
+      const fileContent = fs.readFileSync(dataFilePath, "utf-8");
+      showData = JSON.parse(fileContent);
+    }
+
+    // Transform API data to internal format
+    const data: RelatedContent = parseAPIResponse(showData.relatedContent);
+
+    // Extract source info from metadata
+    const { title, image } = extractSourceInfo(showData);
 
     console.log(`📺 Source: ${title}`);
     if (!image) {
@@ -135,22 +240,16 @@ export async function createVideo({
       );
     }
 
-    // Create output directory if it doesn't exist
-    const outputDir = path.join(process.cwd(), "output");
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-
-    // Generate output filename
+    // Generate output filename with timestamp
     const timestamp = new Date()
       .toISOString()
       .replace(/[:.]/g, "-")
       .slice(0, -5);
-    const outputFilename = `${selectedFile.replace(
-      ".output.json",
-      ""
-    )}-${timestamp}.mp4`;
-    const outputPath = path.join(outputDir, outputFilename);
+    const outputFilename = `${selectedShow}-${timestamp}.mp4`;
+
+    // Save to show-specific directory
+    const showDir = path.join(process.cwd(), "output", selectedShow);
+    const outputPath = path.join(showDir, outputFilename);
 
     console.log("\n🎥 Starting video render...\n");
 
