@@ -3,20 +3,21 @@ import { renderMedia, selectComposition } from '@remotion/renderer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { RelatedContent } from './types';
-import { VIDEO_FPS, VIDEO_HEIGHT, VIDEO_WIDTH } from './constants';
+import { VIDEO_FPS, VIDEO_HEIGHT, VIDEO_WIDTH, SCENE_1_DURATION } from './constants';
 
 export interface RenderOptions {
   outputPath: string;
   data: RelatedContent;
   sourceTitle: string;
   sourceImage: string;
+  hookOnly?: boolean;
 }
 
 /**
  * Render a video from the provided data
  */
 export async function renderVideo(options: RenderOptions): Promise<void> {
-  const { outputPath, data, sourceTitle, sourceImage } = options;
+  const { outputPath, data, sourceTitle, sourceImage, hookOnly = false } = options;
 
   console.log('📦 Bundling Remotion project...');
 
@@ -37,15 +38,25 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
       data,
       sourceTitle,
       sourceImage,
+      hookOnly,
     },
   });
 
   console.log('✅ Composition selected');
+  
+  // Override duration if hookOnly is true
+  if (hookOnly) {
+    composition.durationInFrames = SCENE_1_DURATION;
+  }
+  
   console.log('🎥 Rendering video...');
   console.log(`   Output: ${outputPath}`);
   console.log(`   Duration: ${composition.durationInFrames} frames (${(composition.durationInFrames / VIDEO_FPS).toFixed(1)}s)`);
   console.log(`   Resolution: ${VIDEO_WIDTH}x${VIDEO_HEIGHT}`);
   console.log(`   FPS: ${VIDEO_FPS}`);
+  if (hookOnly) {
+    console.log(`   Mode: Hook scene only (faster iteration)`);
+  }
 
   // Ensure output directory exists
   const outputDir = path.dirname(outputPath);
@@ -63,6 +74,7 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
       data,
       sourceTitle,
       sourceImage,
+      hookOnly,
     },
     onProgress: ({ progress, renderedFrames, encodedFrames }) => {
       const percentage = (progress * 100).toFixed(1);

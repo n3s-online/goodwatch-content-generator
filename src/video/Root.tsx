@@ -17,6 +17,7 @@ export const RemotionRoot: React.FC = () => {
     },
     sourceTitle: "Loading...",
     sourceImage: "",
+    hookOnly: false,
   };
 
   return (

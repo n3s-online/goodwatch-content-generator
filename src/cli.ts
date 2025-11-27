@@ -172,9 +172,10 @@ program
 program
   .command("create-video")
   .description("Create a short-form video from an output file")
-  .action(async () => {
+  .option("--hook-only", "Only render the hook scene for faster iteration")
+  .action(async (options: { hookOnly?: boolean }) => {
     try {
-      await createVideo();
+      await createVideo({ hookOnly: options.hookOnly || false });
     } catch (error) {
       console.error("Error:", error instanceof Error ? error.message : error);
       process.exit(1);

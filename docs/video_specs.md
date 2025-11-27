@@ -31,11 +31,11 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 ## Scene Breakdown & Timing
 
-**Scene Order:** Hook (4s) → Category 1 (4s) → Category 2 (4s) → Category 3 (4s) → Overall (4s) → Closing (5s)
+**Scene Order:** Hook (3s) → Category 1 (4s) → Category 2 (4s) → Category 3 (4s) → Overall (4s) → Closing (5s)
 
-**Total Duration:** ~25 seconds
+**Total Duration:** ~24 seconds
 
-### Scene 1: Hook (4 seconds)
+### Scene 1: Hook (3 seconds)
 
 **Purpose:** Immediately establish what content this video is about
 
@@ -43,34 +43,38 @@ Generate short-form vertical videos (20-30 seconds) showcasing content recommend
 
 ```
 ┌─────────────────────────┐
-│  "If you liked"         │ ← White, 42px, font-weight 600, centered
-│                         │
-│                         │
+│  "If you liked"         │ ← White, 64px, font-weight 700, centered
+│                         │   Text shadow for readability
 │                         │
 │   [MAIN CONTENT IMAGE]  │ ← Full poster/cover (contained, not cropped)
-│    (Full Poster)        │   Large - Takes up 82% of screen height
-│                         │   66% width, centered
+│    (Full Poster)        │   Takes up 60% of screen height
+│                         │   75% width, centered
 │                         │   Maintains aspect ratio
-│                         │   Zooms from 1.0x to 1.05x over 4 seconds
-│                         │   Minimal padding (30px top, 20px sides)
+│                         │   Zooms from 1.0x to 1.08x over 3 seconds
+│                         │   Padding (40px top, 20px sides)
+│                         │   Stronger shadow/glow effect
 │                         │
-│      [TITLE]            │ ← White, 56px bold, centered
-│ "then you need to       │ ← White, 42px, font-weight 600, centered
-│      watch..."          │
+│      [TITLE]            │ ← White, 96px, font-weight 900, centered
+│                         │   Text shadow, subtle pulse at 1.5s
+│ "then you need to       │ ← White, 56px, font-weight 600, centered
+│      watch..."          │   Text shadow
 └─────────────────────────┘
 ```
 
 **Animation:**
 
-- 0.0s: Full poster image zooms in slightly (1.0x to 1.05x scale) over 4 seconds
-- 0.5s: Text fades in from bottom
-- 3.0s: Slight blur/fade begins as transition to Scene 2
+- 0.0s: Full poster image zooms in (1.0x to 1.08x scale) over 3 seconds
+- 0.1s: All text fades in quickly from bottom (0.3s duration)
+- 1.5s: Title subtle pulse animation (1.0x to 1.02x scale)
+- 2.5s: Slight blur/fade begins as transition to Scene 2
 
 **Elements:**
 
 - Main content poster image (full image visible, contained with padding, maintains aspect ratio)
-- Title text (max 2 lines, truncate if needed)
+- Title text (truncate at 22 characters if needed)
 - Copy layout (top to bottom): "If you liked" → [Image] → [Title] → "then you need to watch..."
+- All text elements have text shadows (2px blur, rgba(0,0,0,0.9)) for better readability
+- Spacing: 30px margin between sections for better vertical distribution
 
 ---
 

@@ -18,6 +18,7 @@ export interface VideoInputProps {
   data: RelatedContent;
   sourceTitle: string;
   sourceImage: string;
+  hookOnly?: boolean;
 }
 
 export interface SceneProps {

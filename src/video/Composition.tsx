@@ -19,6 +19,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
   data,
   sourceTitle,
   sourceImage,
+  hookOnly = false,
 }) => {
   // Get all available categories (excluding "Overall")
   const movieCategories = Object.keys(data.movies).filter(
@@ -99,6 +100,19 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
   currentFrame += SCENE_5_DURATION; // Overall - 4s
 
   const scene6Start = currentFrame;
+
+  // If hookOnly is true, only render the hook scene
+  if (hookOnly) {
+    return (
+      <Sequence from={0} durationInFrames={SCENE_1_DURATION}>
+        <HookScene
+          data={data}
+          sourceTitle={sourceTitle}
+          sourceImage={sourceImage}
+        />
+      </Sequence>
+    );
+  }
 
   return (
     <>

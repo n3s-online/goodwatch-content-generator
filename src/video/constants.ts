@@ -4,14 +4,14 @@ export const VIDEO_HEIGHT = 1920;
 export const VIDEO_FPS = 30;
 
 // Scene durations (in frames) - Based on video_specs.md
-export const SCENE_1_DURATION = 120; // 4 seconds - Hook
+export const SCENE_1_DURATION = 90; // 3 seconds - Hook
 export const SCENE_2_DURATION = 120; // 4 seconds - Category 1
 export const SCENE_3_DURATION = 120; // 4 seconds - Category 2
 export const SCENE_4_DURATION = 120; // 4 seconds - Category 3
 export const SCENE_5_DURATION = 120; // 4 seconds - Overall Top Picks
 export const SCENE_6_DURATION = 150; // 5 seconds - Closing
 
-// Total video duration (25-28 seconds target)
+// Total video duration (~24 seconds)
 export const TOTAL_DURATION =
   SCENE_1_DURATION +
   SCENE_2_DURATION +

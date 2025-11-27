@@ -92,7 +92,7 @@ function extractSourceInfo(
 /**
  * Main function to create a video
  */
-export async function createVideo(): Promise<void> {
+export async function createVideo({ hookOnly = false }: { hookOnly?: boolean } = {}): Promise<void> {
   try {
     console.log("\n🎬 Goodwatch Video Creator\n");
 
@@ -139,6 +139,7 @@ export async function createVideo(): Promise<void> {
       data,
       sourceTitle: title,
       sourceImage: image,
+      hookOnly,
     });
 
     console.log("\n🎉 Done!\n");
