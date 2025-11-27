@@ -2,8 +2,12 @@ import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import { COLORS, VIDEO_HEIGHT, VIDEO_WIDTH } from "../constants";
 import { MediaItem, ClosingSceneProps } from "../types";
+import { formatCategoryLabel } from "../utils/formatCategory";
 
-export const ClosingScene: React.FC<ClosingSceneProps> = ({ allItems }) => {
+export const ClosingScene: React.FC<ClosingSceneProps> = ({
+  allItems,
+  categoryLabels,
+}) => {
   const frame = useCurrentFrame();
 
   // Scene is now 5 seconds (150 frames)
@@ -31,21 +35,22 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({ allItems }) => {
     extrapolateRight: "clamp",
   });
 
-  // Grid layout: 3 columns × 4 rows
-  const columns = 3;
+  // Grid layout: 4 columns × 4 rows (16 items)
+  const columns = 4;
   const rows = 4;
-  const itemWidth = 200;
-  const itemHeight = 300;
-  const gap = 20;
+  const itemWidth = 180;
+  const itemHeight = 270;
+  const gap = 15;
+  const labelHeight = 40; // Height for category labels
 
   // Center the grid
   const gridWidth = columns * itemWidth + (columns - 1) * gap;
-  const gridHeight = rows * itemHeight + (rows - 1) * gap;
+  const gridHeight = rows * (itemHeight + labelHeight) + (rows - 1) * gap;
   const startX = (VIDEO_WIDTH - gridWidth) / 2;
-  const startY = (VIDEO_HEIGHT - gridHeight) / 2 - 50; // Offset up for logo and title
+  const startY = (VIDEO_HEIGHT - gridHeight) / 2 - 20; // Offset up for title
 
-  // Take first 12 items
-  const displayItems = allItems.slice(0, 12);
+  // Show all 16 items
+  const displayItems = allItems.slice(0, 16);
 
   return (
     <AbsoluteFill
@@ -77,7 +82,7 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({ allItems }) => {
         </span>
       </div>
 
-      {/* Grid of all 12 recommendations */}
+      {/* Grid of all 16 recommendations */}
       <div
         style={{
           position: "absolute",
@@ -89,11 +94,44 @@ export const ClosingScene: React.FC<ClosingSceneProps> = ({ allItems }) => {
           transform: `scale(${gridScale})`,
         }}
       >
+        {/* Category labels for each row */}
+        {categoryLabels.map((label, rowIndex) => {
+          const y = rowIndex * (itemHeight + labelHeight + gap);
+          return (
+            <div
+              key={`label-${rowIndex}`}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: y,
+                width: gridWidth,
+                height: labelHeight,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 28,
+                  fontWeight: "bold",
+                  fontFamily: "Helvetica Neue, Arial, sans-serif",
+                  color: COLORS.accent,
+                  letterSpacing: "1px",
+                }}
+              >
+                {formatCategoryLabel(label)}
+              </span>
+            </div>
+          );
+        })}
+
+        {/* Recommendation items */}
         {displayItems.map((item, index) => {
           const col = index % columns;
           const row = Math.floor(index / columns);
           const x = col * (itemWidth + gap);
-          const y = row * (itemHeight + gap);
+          const y = row * (itemHeight + labelHeight + gap) + labelHeight;
 
           return (
             <div

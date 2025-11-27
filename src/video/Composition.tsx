@@ -170,6 +170,14 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
     ]),
   ];
 
+  // Category labels for each row (4 items per category)
+  const categoryLabels = [
+    overallCategoryKey, // Row 1
+    selectedItems.categories[0]?.name || "",
+    selectedItems.categories[1]?.name || "",
+    selectedItems.categories[2]?.name || "",
+  ];
+
   // Calculate frame offsets using dynamic durations
   // New order: Hook -> Category 1 -> Category 2 -> Category 3 -> Overall -> Closing
   let currentFrame = 0;
@@ -276,7 +284,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
 
       {/* Scene 6: Closing */}
       <Sequence from={scene6Start} durationInFrames={SCENE_6_DURATION}>
-        <ClosingScene allItems={allItems} />
+        <ClosingScene allItems={allItems} categoryLabels={categoryLabels} />
       </Sequence>
     </>
   );

@@ -54,6 +54,7 @@ export interface CategoryRecommendationsSceneProps {
 
 export interface ClosingSceneProps {
   allItems: MediaItem[];
+  categoryLabels: string[];
 }
 
 export interface GridItemProps {
