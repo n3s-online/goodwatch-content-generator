@@ -7,11 +7,19 @@ export type {
   ShowData,
 } from "../api-client";
 
+export interface StreamingProvider {
+  id: number;
+  name: string;
+  logo: string;
+  countries: string[];
+}
+
 export interface MediaItem {
   name: string;
   link: string;
   image: string;
   goodwatch_score: number;
+  streaming_availability?: StreamingProvider[];
 }
 
 export interface CategoryContent {
@@ -39,12 +47,6 @@ export interface SceneProps {
   data: RelatedContent;
   sourceTitle: string;
   sourceImage: string;
-  durationInFrames?: number;
-}
-
-export interface OverallSceneProps {
-  movies: MediaItem[];
-  tvShows: MediaItem[];
   durationInFrames?: number;
 }
 

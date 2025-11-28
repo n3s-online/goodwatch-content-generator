@@ -17,7 +17,6 @@ import {
   VIDEO_FPS,
 } from "./constants";
 import { HookScene } from "./scenes/HookScene";
-import { OverallScene } from "./scenes/OverallScene";
 import { CategoryRecommendationsScene } from "./scenes/CategoryRecommendationsScene";
 import { ClosingScene } from "./scenes/ClosingScene";
 import { VideoInputProps } from "./types";
@@ -281,7 +280,8 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
       {/* Scene 5: Overall Top Picks */}
       <Sequence from={scene5Start} durationInFrames={sceneDurations.scene5}>
         {audioFiles?.overall && <Audio src={staticFile(audioFiles.overall)} />}
-        <OverallScene
+        <CategoryRecommendationsScene
+          categoryName="overall"
           movies={selectedItems.overall.movies}
           tvShows={selectedItems.overall.tvShows}
           durationInFrames={sceneDurations.scene5}

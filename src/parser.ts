@@ -1,10 +1,18 @@
 import { APIResponse, APIMediaItem } from "./api-client";
 
+export interface StreamingProvider {
+  id: number;
+  name: string;
+  logo: string;
+  countries: string[];
+}
+
 export interface MediaItem {
   name: string;
   link: string;
   image: string;
   goodwatch_score: number;
+  streaming_availability?: StreamingProvider[];
 }
 
 export interface CategoryContent {
@@ -25,6 +33,7 @@ function transformMediaItem(apiItem: APIMediaItem): MediaItem {
     link: apiItem.link,
     image: apiItem.poster_path,
     goodwatch_score: apiItem.goodwatch_score,
+    streaming_availability: apiItem.streaming_availability,
   };
 }
 

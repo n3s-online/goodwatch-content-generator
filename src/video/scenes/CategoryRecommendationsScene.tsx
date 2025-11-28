@@ -1,8 +1,136 @@
 import React from "react";
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import { COLORS, FONTS, VIDEO_WIDTH, VIDEO_HEIGHT } from "../constants";
-import { CategoryRecommendationsSceneProps, MediaItem } from "../types";
+import {
+  CategoryRecommendationsSceneProps,
+  MediaItem,
+  StreamingProvider,
+} from "../types";
 import { formatCategoryLabel } from "../utils/formatCategory";
+
+// Platform mapping - maps provider names to letter abbreviations
+const PLATFORM_MAP: Record<string, string> = {
+  "Apple TV": "A",
+  "Amazon Prime Video": "P",
+  Netflix: "N",
+  Crunchyroll: "C",
+  "Disney Plus": "D",
+  Hulu: "H",
+  "Paramount Plus": "R",
+  Max: "M",
+  "YouTube Premium": "Y",
+  Peacock: "K",
+};
+
+// Country mapping - prioritized order
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: "🇺🇸",
+  CN: "🇨🇳",
+  MX: "🇲🇽",
+};
+
+interface StreamingRowProps {
+  countryCode: string;
+  platforms: string[];
+}
+
+const StreamingRow: React.FC<StreamingRowProps> = ({
+  countryCode,
+  platforms,
+}) => {
+  const flag = COUNTRY_FLAGS[countryCode];
+  if (!flag) return null;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        marginBottom: 9,
+      }}
+    >
+      <span style={{ fontSize: 63 }}>{flag}</span>
+      {platforms.map((platform, idx) => (
+        <div
+          key={idx}
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            color: "white",
+            fontSize: 45,
+            fontWeight: "bold",
+            fontFamily: "Helvetica Neue, Arial, sans-serif",
+            padding: "9px 18px",
+            borderRadius: 14,
+          }}
+        >
+          {platform}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+interface StreamingOverlayProps {
+  availability?: StreamingProvider[];
+}
+
+const StreamingOverlay: React.FC<StreamingOverlayProps> = ({
+  availability,
+}) => {
+  if (!availability || availability.length === 0) return null;
+
+  // Organize platforms by country
+  const platformsByCountry: Record<string, string[]> = {};
+
+  availability.forEach((provider) => {
+    const platformLetter = PLATFORM_MAP[provider.name];
+    if (!platformLetter) return; // Skip unsupported platforms
+
+    provider.countries.forEach((country) => {
+      if (COUNTRY_FLAGS[country]) {
+        if (!platformsByCountry[country]) {
+          platformsByCountry[country] = [];
+        }
+        if (!platformsByCountry[country].includes(platformLetter)) {
+          platformsByCountry[country].push(platformLetter);
+        }
+      }
+    });
+  });
+
+  // Get rows for supported countries in priority order
+  const rows = ["US", "CN", "MX"]
+    .filter((country) => platformsByCountry[country])
+    .map((country) => ({
+      countryCode: country,
+      platforms: platformsByCountry[country].sort(),
+    }))
+    .slice(0, 3);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: 23,
+        left: 23,
+        display: "flex",
+        flexDirection: "column",
+        gap: 9,
+      }}
+    >
+      {rows.map((row) => (
+        <StreamingRow
+          key={row.countryCode}
+          countryCode={row.countryCode}
+          platforms={row.platforms}
+        />
+      ))}
+    </div>
+  );
+};
 
 interface GridItemProps {
   item: MediaItem;
@@ -117,6 +245,9 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
             {item.goodwatch_score}
           </span>
         </div>
+
+        {/* Streaming Availability Overlay - bottom-left */}
+        <StreamingOverlay availability={item.streaming_availability} />
       </div>
 
       {/* Title - 2x larger */}
@@ -148,12 +279,9 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
   );
 };
 
-export const CategoryRecommendationsScene: React.FC<CategoryRecommendationsSceneProps> = ({
-  categoryName,
-  movies,
-  tvShows,
-  durationInFrames = 120,
-}) => {
+export const CategoryRecommendationsScene: React.FC<
+  CategoryRecommendationsSceneProps
+> = ({ categoryName, movies, tvShows, durationInFrames = 120 }) => {
   const frame = useCurrentFrame();
 
   // Category label fades in (0.0s)
@@ -169,9 +297,14 @@ export const CategoryRecommendationsScene: React.FC<CategoryRecommendationsScene
 
   // Begin fade transition 0.5s before end (15 frames before end)
   const fadeOutStart = Math.max(0, durationInFrames - 15);
-  const fadeOutOpacity = interpolate(frame, [fadeOutStart, durationInFrames], [1, 0.7], {
-    extrapolateRight: "clamp",
-  });
+  const fadeOutOpacity = interpolate(
+    frame,
+    [fadeOutStart, durationInFrames],
+    [1, 0.7],
+    {
+      extrapolateRight: "clamp",
+    }
+  );
 
   return (
     <AbsoluteFill
@@ -220,4 +353,3 @@ export const CategoryRecommendationsScene: React.FC<CategoryRecommendationsScene
     </AbsoluteFill>
   );
 };
-
