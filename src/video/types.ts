@@ -16,6 +16,7 @@ export interface StreamingProvider {
 
 export interface MediaItem {
   name: string;
+  year: string;
   link: string;
   image: string;
   goodwatch_score: number;

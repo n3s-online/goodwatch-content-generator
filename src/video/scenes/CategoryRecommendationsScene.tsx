@@ -32,117 +32,109 @@ const PLATFORM_MAP: Record<string, string> = {
 // Country mapping - maps country codes to flag image filenames
 const COUNTRY_FLAGS: Record<string, string> = {
   US: "us.png",
-  CN: "cn.png",
   MX: "mx.png",
 };
 
 interface StreamingRowProps {
-  countryCode: string;
-  platforms: string[];
+  usPlatforms: string[];
+  mxPlatforms: string[];
 }
 
 const StreamingRow: React.FC<StreamingRowProps> = ({
-  countryCode,
-  platforms,
+  usPlatforms,
+  mxPlatforms,
 }) => {
-  const flagFile = COUNTRY_FLAGS[countryCode];
-  if (!flagFile) return null;
+  if (usPlatforms.length === 0 && mxPlatforms.length === 0) return null;
 
   return (
     <div
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 12,
-        marginBottom: 4,
+        justifyContent: "center",
+        gap: 8,
+        marginTop: 8,
       }}
     >
-      <Img
-        src={staticFile(`flags/${flagFile}`)}
-        style={{
-          width: 50,
-          height: 50,
-          objectFit: "contain",
-          opacity: 0.8,
-        }}
-      />
-      {platforms.map((logoFile, idx) => (
-        <Img
-          key={idx}
-          src={staticFile(`logos/${logoFile}`)}
-          style={{
-            width: 50,
-            height: 50,
-            objectFit: "contain",
-            opacity: 0.8,
-          }}
-        />
-      ))}
+      {usPlatforms.length > 0 && (
+        <>
+          <Img
+            src={staticFile("flags/us.png")}
+            style={{
+              width: 40,
+              height: 40,
+              objectFit: "contain",
+            }}
+          />
+          {usPlatforms.map((logoFile, idx) => (
+            <Img
+              key={`us-${idx}`}
+              src={staticFile(`logos/${logoFile}`)}
+              style={{
+                width: 40,
+                height: 40,
+                objectFit: "contain",
+              }}
+            />
+          ))}
+        </>
+      )}
+      {mxPlatforms.length > 0 && (
+        <>
+          <Img
+            src={staticFile("flags/mx.png")}
+            style={{
+              width: 40,
+              height: 40,
+              objectFit: "contain",
+            }}
+          />
+          {mxPlatforms.map((logoFile, idx) => (
+            <Img
+              key={`mx-${idx}`}
+              src={staticFile(`logos/${logoFile}`)}
+              style={{
+                width: 40,
+                height: 40,
+                objectFit: "contain",
+              }}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };
 
-interface StreamingOverlayProps {
-  availability?: StreamingProvider[];
-}
+function getPlatformsByCountry(availability?: StreamingProvider[]): {
+  usPlatforms: string[];
+  mxPlatforms: string[];
+} {
+  if (!availability || availability.length === 0) {
+    return { usPlatforms: [], mxPlatforms: [] };
+  }
 
-const StreamingOverlay: React.FC<StreamingOverlayProps> = ({
-  availability,
-}) => {
-  if (!availability || availability.length === 0) return null;
-
-  // Organize platforms by country
-  const platformsByCountry: Record<string, string[]> = {};
+  const platformsByCountry: Record<string, Set<string>> = {
+    US: new Set(),
+    MX: new Set(),
+  };
 
   availability.forEach((provider) => {
     const platformLogo = PLATFORM_MAP[provider.name];
-    if (!platformLogo) return; // Skip unsupported platforms
+    if (!platformLogo) return;
 
     provider.countries.forEach((country) => {
-      if (COUNTRY_FLAGS[country]) {
-        if (!platformsByCountry[country]) {
-          platformsByCountry[country] = [];
-        }
-        if (!platformsByCountry[country].includes(platformLogo)) {
-          platformsByCountry[country].push(platformLogo);
-        }
+      if (platformsByCountry[country]) {
+        platformsByCountry[country].add(platformLogo);
       }
     });
   });
 
-  // Get rows for supported countries in priority order
-  const rows = ["US", "CN", "MX"]
-    .filter((country) => platformsByCountry[country])
-    .map((country) => ({
-      countryCode: country,
-      platforms: platformsByCountry[country].sort(),
-    }))
-    .slice(0, 3);
-
-  if (rows.length === 0) return null;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: "50%",
-        left: 15,
-        transform: "translateY(-50%)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 9,
-      }}
-    >
-      {rows.map((row) => (
-        <StreamingRow
-          key={row.countryCode}
-          countryCode={row.countryCode}
-          platforms={row.platforms}
-        />
-      ))}
-    </div>
-  );
-};
+  return {
+    usPlatforms: Array.from(platformsByCountry.US).sort(),
+    mxPlatforms: Array.from(platformsByCountry.MX).sort(),
+  };
+}
 
 interface GridItemProps {
   item: MediaItem;
@@ -161,11 +153,11 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
     extrapolateRight: "clamp",
   });
 
-  // Layout constants - 2x2 grid with full poster aspect ratio (10% smaller)
-  const itemWidth = 450;
-  const itemHeight = 675; // Poster aspect ratio (2:3)
+  // Layout constants - 2x2 grid with poster aspect ratio (10% smaller than original 450x675)
+  const itemWidth = 405;
+  const itemHeight = 608; // Poster aspect ratio (2:3)
   const gap = 20;
-  const titleHeight = 80; // Increased for larger titles
+  const titleHeight = 120; // Space for title + streaming row
 
   // Center the grid horizontally
   const gridWidth = itemWidth * 2 + gap;
@@ -198,6 +190,9 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
   };
 
   const pos = positions[position];
+  const { usPlatforms, mxPlatforms } = getPlatformsByCountry(
+    item.streaming_availability
+  );
 
   return (
     <div
@@ -229,7 +224,7 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
           }}
         />
 
-        {/* Score Badge - Circular, 80px diameter (60% larger), top-right */}
+        {/* Score Badge - Circular, 80px diameter, top-right */}
         <div
           style={{
             position: "absolute",
@@ -257,23 +252,18 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
             {item.goodwatch_score}
           </span>
         </div>
-
-        {/* Streaming Availability Overlay - bottom-left */}
-        <StreamingOverlay availability={item.streaming_availability} />
       </div>
 
-      {/* Title - 2x larger */}
+      {/* Title with Year */}
       <div
         style={{
           textAlign: "center",
           padding: "0 10px",
-          height: titleHeight - 10,
-          overflow: "hidden",
         }}
       >
         <span
           style={{
-            fontSize: 40,
+            fontSize: 36,
             fontWeight: "600",
             fontFamily: "Helvetica Neue, Arial, sans-serif",
             color: COLORS.text,
@@ -284,8 +274,11 @@ const GridItem: React.FC<GridItemProps> = ({ item, position, delay }) => {
             textOverflow: "ellipsis",
           }}
         >
-          {item.name}
+          {item.name} ({item.year})
         </span>
+
+        {/* Streaming Row - US and MX in one row */}
+        <StreamingRow usPlatforms={usPlatforms} mxPlatforms={mxPlatforms} />
       </div>
     </div>
   );

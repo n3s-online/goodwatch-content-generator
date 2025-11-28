@@ -9,6 +9,7 @@ export interface StreamingProvider {
 
 export interface MediaItem {
   name: string;
+  year: string;
   link: string;
   image: string;
   goodwatch_score: number;
@@ -30,6 +31,7 @@ export interface RelatedContent {
 function transformMediaItem(apiItem: APIMediaItem): MediaItem {
   return {
     name: apiItem.title,
+    year: apiItem.release_year,
     link: apiItem.link,
     image: apiItem.poster_path,
     goodwatch_score: apiItem.goodwatch_score,
