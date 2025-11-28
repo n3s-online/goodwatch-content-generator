@@ -36,6 +36,7 @@ export interface VideoInputProps {
   sourceTitle: string;
   sourceImage: string;
   hookOnly?: boolean;
+  categoryOnly?: boolean;
   audioFiles?: {
     hook?: string;
     categories?: string[];

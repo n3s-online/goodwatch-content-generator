@@ -26,6 +26,7 @@ export interface RenderOptions {
   sourceTitle: string;
   sourceImage: string;
   hookOnly?: boolean;
+  categoryOnly?: boolean;
 }
 
 /**
@@ -38,6 +39,7 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
     sourceTitle,
     sourceImage,
     hookOnly = false,
+    categoryOnly = false,
   } = options;
 
   // Extract categories for audio generation (excluding "overall")
@@ -54,7 +56,7 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
 
   // Generate audio files before bundling
   let audioFiles;
-  if (!hookOnly) {
+  if (!hookOnly && !categoryOnly) {
     console.log("🎤 Generating audio files...");
     const outputDir = path.dirname(outputPath);
     audioFiles = await generateAllAudio({
@@ -63,6 +65,16 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
       outputDir,
     });
     console.log("✅ Audio files generated");
+  } else if (categoryOnly) {
+    // For category-only, just generate the first category audio
+    console.log("🎤 Generating first category audio...");
+    const outputDir = path.dirname(outputPath);
+    audioFiles = await generateAllAudio({
+      sourceTitle,
+      categories: [selectedCategories[0]],
+      outputDir,
+    });
+    console.log("✅ Category audio generated");
   }
 
   console.log("📦 Bundling Remotion project...");
@@ -85,6 +97,7 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
       sourceTitle,
       sourceImage,
       hookOnly,
+      categoryOnly,
       audioFiles,
     },
   });
@@ -113,6 +126,26 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
       }
     } else {
       totalDuration = SCENE_1_DURATION;
+    }
+  } else if (categoryOnly) {
+    // For category-only mode, calculate duration based on first category audio
+    if (audioFiles?.categories?.[0]) {
+      try {
+        const metadata = await getVideoMetadata(
+          path.join(process.cwd(), "public", audioFiles.categories[0])
+        );
+        if (metadata.durationInSeconds !== null) {
+          const categoryFrames = Math.ceil(metadata.durationInSeconds * VIDEO_FPS);
+          totalDuration = Math.max(SCENE_2_DURATION, categoryFrames);
+        } else {
+          totalDuration = SCENE_2_DURATION;
+        }
+      } catch (error) {
+        console.warn("Could not get category audio duration, using default");
+        totalDuration = SCENE_2_DURATION;
+      }
+    } else {
+      totalDuration = SCENE_2_DURATION;
     }
   } else if (audioFiles) {
     // Calculate total duration for full video
@@ -211,6 +244,8 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
   console.log(`   FPS: ${VIDEO_FPS}`);
   if (hookOnly) {
     console.log(`   Mode: Hook scene only (faster iteration)`);
+  } else if (categoryOnly) {
+    console.log(`   Mode: First category scene only (faster iteration)`);
   }
 
   // Ensure output directory exists
@@ -230,6 +265,7 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
       sourceTitle,
       sourceImage,
       hookOnly,
+      categoryOnly,
       audioFiles,
     },
     onProgress: ({ progress, renderedFrames, encodedFrames }) => {

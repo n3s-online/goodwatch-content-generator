@@ -27,6 +27,7 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
   sourceTitle,
   sourceImage,
   hookOnly = false,
+  categoryOnly = false,
   audioFiles,
 }) => {
   // State for dynamic scene durations based on audio length
@@ -209,6 +210,25 @@ export const VideoComposition: React.FC<VideoInputProps> = ({
           sourceTitle={sourceTitle}
           sourceImage={sourceImage}
           durationInFrames={sceneDurations.scene1}
+        />
+      </Sequence>
+    );
+  }
+
+  // If categoryOnly is true, only render the first category scene
+  if (categoryOnly && selectedItems.categories[0]) {
+    if (!durationsLoaded) return null;
+
+    return (
+      <Sequence from={0} durationInFrames={sceneDurations.scene2}>
+        {audioFiles?.categories?.[0] && (
+          <Audio src={staticFile(audioFiles.categories[0])} />
+        )}
+        <CategoryRecommendationsScene
+          categoryName={selectedItems.categories[0].name}
+          movies={selectedItems.categories[0].movies}
+          tvShows={selectedItems.categories[0].tvShows}
+          durationInFrames={sceneDurations.scene2}
         />
       </Sequence>
     );

@@ -1,5 +1,11 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
+import {
+  AbsoluteFill,
+  Img,
+  interpolate,
+  useCurrentFrame,
+  staticFile,
+} from "remotion";
 import { COLORS, FONTS, VIDEO_WIDTH, VIDEO_HEIGHT } from "../constants";
 import {
   CategoryRecommendationsSceneProps,
@@ -8,18 +14,19 @@ import {
 } from "../types";
 import { formatCategoryLabel } from "../utils/formatCategory";
 
-// Platform mapping - maps provider names to letter abbreviations
+// Platform mapping - maps provider names to logo filenames
 const PLATFORM_MAP: Record<string, string> = {
-  "Apple TV": "A",
-  "Amazon Prime Video": "P",
-  Netflix: "N",
-  Crunchyroll: "C",
-  "Disney Plus": "D",
-  Hulu: "H",
-  "Paramount Plus": "R",
-  Max: "M",
-  "YouTube Premium": "Y",
-  Peacock: "K",
+  "Apple TV": "apple-tv.avif",
+  "Amazon Prime Video": "prime-video.avif",
+  Netflix: "netflix.avif",
+  Crunchyroll: "crunchyroll.avif",
+  "Disney Plus": "disney-plus.avif",
+  Hulu: "hulu.avif",
+  "Paramount Plus": "paramount-plus.avif",
+  Max: "max.avif",
+  "YouTube Premium": "youtube.avif",
+  Peacock: "peacock.avif",
+  Fubo: "fubo.avif",
 };
 
 // Country mapping - prioritized order
@@ -46,25 +53,34 @@ const StreamingRow: React.FC<StreamingRowProps> = ({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 14,
+        gap: 12,
         marginBottom: 9,
       }}
     >
       <span style={{ fontSize: 63 }}>{flag}</span>
-      {platforms.map((platform, idx) => (
+      {platforms.map((logoFile, idx) => (
         <div
           key={idx}
           style={{
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            color: "white",
-            fontSize: 45,
-            fontWeight: "bold",
-            fontFamily: "Helvetica Neue, Arial, sans-serif",
-            padding: "9px 18px",
-            borderRadius: 14,
+            width: 50,
+            height: 50,
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 6,
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
           }}
         >
-          {platform}
+          <Img
+            src={staticFile(`logos/${logoFile}`)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
         </div>
       ))}
     </div>
@@ -84,16 +100,16 @@ const StreamingOverlay: React.FC<StreamingOverlayProps> = ({
   const platformsByCountry: Record<string, string[]> = {};
 
   availability.forEach((provider) => {
-    const platformLetter = PLATFORM_MAP[provider.name];
-    if (!platformLetter) return; // Skip unsupported platforms
+    const platformLogo = PLATFORM_MAP[provider.name];
+    if (!platformLogo) return; // Skip unsupported platforms
 
     provider.countries.forEach((country) => {
       if (COUNTRY_FLAGS[country]) {
         if (!platformsByCountry[country]) {
           platformsByCountry[country] = [];
         }
-        if (!platformsByCountry[country].includes(platformLetter)) {
-          platformsByCountry[country].push(platformLetter);
+        if (!platformsByCountry[country].includes(platformLogo)) {
+          platformsByCountry[country].push(platformLogo);
         }
       }
     });

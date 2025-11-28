@@ -77,7 +77,8 @@ function extractSourceInfo(showData: ShowData): {
  */
 export async function createVideo({
   hookOnly = false,
-}: { hookOnly?: boolean } = {}): Promise<void> {
+  categoryOnly = false,
+}: { hookOnly?: boolean; categoryOnly?: boolean } = {}): Promise<void> {
   try {
     console.log("\n🎬 Goodwatch Video Creator\n");
 
@@ -262,6 +263,7 @@ export async function createVideo({
       sourceTitle: title,
       sourceImage: image,
       hookOnly,
+      categoryOnly,
     });
 
     // Generate social media metadata if it doesn't exist
