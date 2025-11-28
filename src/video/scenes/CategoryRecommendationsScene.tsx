@@ -125,8 +125,9 @@ const StreamingOverlay: React.FC<StreamingOverlayProps> = ({
     <div
       style={{
         position: "absolute",
-        bottom: 23,
-        left: 23,
+        top: "50%",
+        left: 15,
+        transform: "translateY(-50%)",
         display: "flex",
         flexDirection: "column",
         gap: 9,
