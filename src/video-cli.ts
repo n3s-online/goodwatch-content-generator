@@ -12,6 +12,8 @@ import {
 } from "./api-client";
 import { parseAPIResponse } from "./parser";
 import { scrapeShowMetadata } from "./show-scraper";
+import { generateVideoMetadata } from "./services/metadata-generator";
+import { selectItemsForScenes } from "./video/utils/deduplicator";
 
 /**
  * Get all show directories in the output directory
@@ -261,6 +263,87 @@ export async function createVideo({
       sourceImage: image,
       hookOnly,
     });
+
+    // Generate social media metadata if it doesn't exist
+    const metadataPath = path.join(showDir, "metadata.json");
+    if (!fs.existsSync(metadataPath)) {
+      console.log("\n📝 Generating social media metadata...\n");
+      try {
+        // Use the SAME logic as the video to select items
+        const movieCategories = Object.keys(data.movies).filter(
+          (cat) => cat.toLowerCase() !== "overall"
+        );
+        const tvShowCategories = Object.keys(data.tv_shows).filter(
+          (cat) => cat.toLowerCase() !== "overall"
+        );
+
+        const availableCategories = movieCategories.filter((cat) =>
+          tvShowCategories.includes(cat)
+        );
+        const selectedCategories = availableCategories.slice(0, 3);
+
+        // Find overall category
+        const overallCategoryKey =
+          Object.keys(data.movies).find(
+            (cat) => cat.toLowerCase() === "overall"
+          ) || "overall";
+
+        // Get items for each category (same as video composition)
+        const getItemsForCategory = (categoryName: string) => {
+          return {
+            movies: data.movies[categoryName] || [],
+            tvShows: data.tv_shows[categoryName] || [],
+          };
+        };
+
+        const overallItems = getItemsForCategory(overallCategoryKey);
+        const categoryData = selectedCategories.map((categoryName) => ({
+          name: categoryName,
+          ...getItemsForCategory(categoryName),
+        }));
+
+        // Use the same deduplication logic as the video
+        const selectedItems = selectItemsForScenes(
+          overallItems.movies,
+          overallItems.tvShows,
+          categoryData
+        );
+
+        // Extract all 16 item names shown in video
+        const recommendations: string[] = [
+          // Overall scene: 4 items
+          ...selectedItems.overall.movies.map((item) => item.name),
+          ...selectedItems.overall.tvShows.map((item) => item.name),
+          // Category scenes: 12 items (4 per category)
+          ...selectedItems.categories.flatMap((cat) => [
+            ...cat.movies.map((item) => item.name),
+            ...cat.tvShows.map((item) => item.name),
+          ]),
+        ];
+
+        const metadata = await generateVideoMetadata({
+          sourceTitle: title,
+          categories: selectedCategories,
+          recommendations,
+        });
+
+        fs.writeFileSync(
+          metadataPath,
+          JSON.stringify(metadata, null, 2),
+          "utf-8"
+        );
+        console.log(
+          `✅ Metadata saved to: output/${selectedShow}/metadata.json\n`
+        );
+      } catch (error) {
+        console.warn(
+          "⚠️  Failed to generate metadata:",
+          error instanceof Error ? error.message : error
+        );
+      }
+    } else {
+      console.log("\n📝 Metadata already exists, skipping generation.\n");
+    }
 
     console.log("\n🎉 Done!\n");
   } catch (error) {

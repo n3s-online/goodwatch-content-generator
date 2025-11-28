@@ -11,7 +11,11 @@ if (!fs.existsSync(AUDIO_CACHE_DIR)) {
 }
 
 function generateCacheKey(input: string): string {
-  return crypto.createHash("sha256").update(input).digest("hex").substring(0, 16);
+  return crypto
+    .createHash("sha256")
+    .update(input)
+    .digest("hex")
+    .substring(0, 16);
 }
 
 export function getAudioCachePath(script: string): string {
@@ -25,4 +29,3 @@ export function loadAudioCache(audioPath: string): string | null {
   }
   return audioPath;
 }
-
