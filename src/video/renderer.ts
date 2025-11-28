@@ -135,7 +135,9 @@ export async function renderVideo(options: RenderOptions): Promise<void> {
           path.join(process.cwd(), "public", audioFiles.categories[0])
         );
         if (metadata.durationInSeconds !== null) {
-          const categoryFrames = Math.ceil(metadata.durationInSeconds * VIDEO_FPS);
+          const categoryFrames = Math.ceil(
+            metadata.durationInSeconds * VIDEO_FPS
+          );
           totalDuration = Math.max(SCENE_2_DURATION, categoryFrames);
         } else {
           totalDuration = SCENE_2_DURATION;

@@ -161,10 +161,13 @@ program
   .command("create-video")
   .description("Create a short-form video from an output file")
   .option("--hook-only", "Only render the hook scene for faster iteration")
-  .option("--category-only", "Only render the first category scene for faster iteration")
+  .option(
+    "--category-only",
+    "Only render the first category scene for faster iteration"
+  )
   .action(async (options: { hookOnly?: boolean; categoryOnly?: boolean }) => {
     try {
-      await createVideo({ 
+      await createVideo({
         hookOnly: options.hookOnly || false,
         categoryOnly: options.categoryOnly || false,
       });

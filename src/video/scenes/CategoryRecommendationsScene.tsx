@@ -29,11 +29,11 @@ const PLATFORM_MAP: Record<string, string> = {
   Fubo: "fubo.avif",
 };
 
-// Country mapping - prioritized order
+// Country mapping - maps country codes to flag image filenames
 const COUNTRY_FLAGS: Record<string, string> = {
-  US: "🇺🇸",
-  CN: "🇨🇳",
-  MX: "🇲🇽",
+  US: "us.png",
+  CN: "cn.png",
+  MX: "mx.png",
 };
 
 interface StreamingRowProps {
@@ -45,8 +45,8 @@ const StreamingRow: React.FC<StreamingRowProps> = ({
   countryCode,
   platforms,
 }) => {
-  const flag = COUNTRY_FLAGS[countryCode];
-  if (!flag) return null;
+  const flagFile = COUNTRY_FLAGS[countryCode];
+  if (!flagFile) return null;
 
   return (
     <div
@@ -54,34 +54,29 @@ const StreamingRow: React.FC<StreamingRowProps> = ({
         display: "flex",
         alignItems: "center",
         gap: 12,
-        marginBottom: 9,
+        marginBottom: 4,
       }}
     >
-      <span style={{ fontSize: 63 }}>{flag}</span>
+      <Img
+        src={staticFile(`flags/${flagFile}`)}
+        style={{
+          width: 50,
+          height: 50,
+          objectFit: "contain",
+          opacity: 0.8,
+        }}
+      />
       {platforms.map((logoFile, idx) => (
-        <div
+        <Img
           key={idx}
+          src={staticFile(`logos/${logoFile}`)}
           style={{
             width: 50,
             height: 50,
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 6,
-            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+            objectFit: "contain",
+            opacity: 0.8,
           }}
-        >
-          <Img
-            src={staticFile(`logos/${logoFile}`)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          />
-        </div>
+        />
       ))}
     </div>
   );
